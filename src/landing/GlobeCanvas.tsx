@@ -143,6 +143,7 @@ export function GlobeCanvas({ selected, pin, onPickCountry }: Props) {
   // When the React `selected` prop changes, mirror it into stateRef and force
   // three-globe to re-evaluate the polygon accessors. Then animate the camera.
   useEffect(() => {
+    console.log('[GlobeCanvas] selection effect', { selected, pin, featuresLen: features.length });
     stateRef.current.selected = selected;
     const world = globeRef.current;
     if (!world) return;
@@ -217,6 +218,7 @@ export function GlobeCanvas({ selected, pin, onPickCountry }: Props) {
           }
         }}
         onPolygonClick={(p: any) => {
+          console.log('[GlobeCanvas] onPolygonClick', p?.properties?.ADMIN, p);
           if (!p) return;
           onPickRef.current(p.properties.ADMIN as string, p);
         }}
