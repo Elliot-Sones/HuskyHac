@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { CountryChip } from './CountryChip';
 import { featureCentroid, GlobeCanvas, type GlobePin } from './GlobeCanvas';
 import { HeroTitle } from './HeroTitle';
+import { StarField } from './StarField';
 import { StartCTA } from './StartCTA';
 import { Toast } from './Toast';
 import { TopNav } from './TopNav';
@@ -85,6 +86,7 @@ export function LandingPage() {
       } ${boarding === 'fade' ? 'fade' : ''}`}
     >
       <div className="stars" />
+      <StarField />
       <GlobeCanvas
         selected={selection?.name ?? null}
         pin={pin}
