@@ -94,10 +94,13 @@ function PlayWorldInner({ destination }: { destination: PlayDestination }) {
       )}
 
       {mode === 'world' && activeTransitDialogue && (
-        <TransitConversationPanel
-          dialogue={activeTransitDialogue}
-          onClose={() => setActiveTransit(null)}
-        />
+        <>
+          {activeTransitFocus?.view === 'taxiInterior' && <TaxiCabinFrame />}
+          <TransitConversationPanel
+            dialogue={activeTransitDialogue}
+            onClose={() => setActiveTransit(null)}
+          />
+        </>
       )}
 
       {mode === 'conversation' && (
@@ -136,6 +139,30 @@ function PlayWorldInner({ destination }: { destination: PlayDestination }) {
           <div className="mt-1 text-[18px] font-black">{lesson.scenario.destination} unlocked</div>
         </div>
       )}
+    </div>
+  );
+}
+
+function TaxiCabinFrame() {
+  return (
+    <div
+      data-testid="taxi-cabin-frame"
+      className="pointer-events-none absolute inset-0 z-20 overflow-hidden"
+      aria-hidden="true"
+    >
+      <div className="absolute inset-x-0 top-0 h-28 bg-gradient-to-b from-slate-950/72 to-transparent" />
+      <div className="absolute left-[6%] top-0 h-[58%] w-8 origin-top rotate-[-10deg] rounded-b-full bg-slate-950/70 shadow-2xl shadow-black/40" />
+      <div className="absolute right-[6%] top-0 h-[58%] w-8 origin-top rotate-[10deg] rounded-b-full bg-slate-950/70 shadow-2xl shadow-black/40" />
+      <div className="absolute left-1/2 top-9 grid h-10 w-24 -translate-x-1/2 place-items-center rounded-xl border border-yellow-100/30 bg-yellow-300/85 text-[13px] font-black tracking-[0.18em] text-slate-950 shadow-xl shadow-black/25">
+        TAXI
+      </div>
+      <div className="absolute left-[12%] right-[12%] top-[18%] h-px bg-white/30" />
+      <div className="absolute inset-x-[8%] bottom-[24%] h-28 rounded-t-[44px] border-t border-white/10 bg-slate-950/72 shadow-2xl shadow-black/55" />
+      <div className="absolute bottom-[25%] left-[12%] h-24 w-24 rounded-full border-[10px] border-slate-900/90 shadow-xl shadow-black/45" />
+      <div className="absolute bottom-[29%] right-[14%] rounded-xl border border-white/10 bg-slate-900/88 px-4 py-3 shadow-xl shadow-black/40">
+        <div className="text-[10px] font-black uppercase tracking-[0.24em] text-yellow-200/80">Meter</div>
+        <div className="mt-1 text-[18px] font-black text-white">12,40 EUR</div>
+      </div>
     </div>
   );
 }

@@ -8,8 +8,7 @@ describe('createTransitConversationFocus', () => {
     for (const target of AIRPORT_TRANSIT_TARGETS) {
       const focus = createTransitConversationFocus(target);
 
-      expect(focus.camera.y).toBeGreaterThan(2);
-      expect(focus.camera.z).toBeGreaterThan(target.position.z);
+      expect(focus.camera.y).toBeGreaterThan(1);
       expect(focus.look.y).toBeGreaterThan(0.5);
       expect(Number.isFinite(focus.look.x)).toBe(true);
       expect(Number.isFinite(focus.look.z)).toBe(true);
@@ -24,8 +23,10 @@ describe('createTransitConversationFocus', () => {
     const focus = createTransitConversationFocus(taxi);
 
     expect(focus.avatarPosition).toBeDefined();
+    expect(focus.view).toBe('taxiInterior');
     expect(focus.avatarScale).toBeLessThan(1);
-    expect(focus.look.x).toBeLessThan(taxi.position.x);
+    expect(pointInsideCollider({ x: focus.camera.x, z: focus.camera.z }, taxiCollider)).toBe(true);
+    expect(pointInsideCollider({ x: focus.look.x, z: focus.look.z }, taxiCollider)).toBe(false);
     expect(pointInsideCollider({ x: focus.avatarPosition!.x, z: focus.avatarPosition!.z }, taxiCollider)).toBe(
       true,
     );
