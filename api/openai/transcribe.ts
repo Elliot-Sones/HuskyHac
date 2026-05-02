@@ -42,10 +42,12 @@ export default async function handler(req: any, res: any) {
 }
 
 async function readRequestBytes(req: AsyncIterable<Uint8Array>) {
-  const chunks: Uint8Array[] = [];
+  const chunks: ArrayBuffer[] = [];
 
   for await (const chunk of req) {
-    chunks.push(chunk);
+    const copy = new Uint8Array(chunk.byteLength);
+    copy.set(chunk);
+    chunks.push(copy.buffer);
   }
 
   return new Blob(chunks);
