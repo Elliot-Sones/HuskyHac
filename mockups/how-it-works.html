@@ -1,0 +1,174 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>HuskyHac — How It Works</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@500;600;700&family=Inter:wght@400;450;500;600&display=swap"
+      rel="stylesheet"
+    />
+          <style>
+          :root {
+            font-family: "Inter", system-ui, sans-serif;
+            font-feature-settings: "ss01", "cv11";
+          }
+          .font-display { font-family: "Plus Jakarta Sans", "Inter", sans-serif; }
+          .font-mono    { font-family: ui-monospace, "SF Mono", Menlo, monospace; }
+    
+          html, body { height: 100%; margin: 0; }
+          body {
+            background:
+              radial-gradient(ellipse 90% 55% at 50% -8%, rgba(98, 142, 220, 0.14), transparent 65%),
+              radial-gradient(ellipse 60% 45% at 50% 108%, rgba(80, 110, 180, 0.07), transparent 65%),
+              linear-gradient(180deg, #050912 0%, #070d1f 55%, #04070f 100%);
+            color: #e7ecf5;
+            overflow-x: hidden; /* Prevent horizontal scroll */
+            letter-spacing: -0.005em;
+          }
+    
+          /* Subtle grain — adds expensive feel */
+          .grain {
+            position: fixed; inset: 0; z-index: 2; pointer-events: none;
+            opacity: .035; mix-blend-mode: overlay;
+            background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='180' height='180'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' seed='6'/><feColorMatrix values='0 0 0 0 1  0 0 0 0 1  0 0 0 0 1  0 0 0 .7 0'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>");
+          }
+    
+          /* Soft starfield, much more restrained */
+          .stars {
+            position: fixed; inset: 0; pointer-events: none; z-index: 0;
+            background-image:
+              radial-gradient(1px 1px at 18% 22%, rgba(255,255,255,0.45), transparent 60%),
+              radial-gradient(1px 1px at 78% 18%, rgba(255,255,255,0.35), transparent 60%),
+              radial-gradient(1px 1px at 36% 78%, rgba(255,255,255,0.30), transparent 60%),
+              radial-gradient(1px 1px at 64% 62%, rgba(255,255,255,0.35), transparent 60%),
+              radial-gradient(1px 1px at 88% 84%, rgba(255,255,255,0.30), transparent 60%),
+              radial-gradient(1px 1px at 11% 86%, rgba(255,255,255,0.30), transparent 60%);
+          }
+    
+          .vignette {
+            position: fixed; inset: 0; pointer-events: none; z-index: 3;
+            background: radial-gradient(ellipse 100% 70% at 50% 50%, transparent 60%, rgba(0,0,0,0.45) 100%);
+          }
+    
+          .logo-mark {
+            background: rgba(255,255,255,0.06);
+            box-shadow: inset 0 0 0 1px rgba(255,255,255,0.12);
+          }
+          .ring-soft     { box-shadow: inset 0 0 0 1px rgba(255,255,255,0.08); }
+    
+          .title-pro {
+            font-family: "Plus Jakarta Sans", "Inter", sans-serif;
+            font-weight: 700;
+            letter-spacing: -0.035em;
+            line-height: 0.96;
+            text-wrap: balance;
+          }
+          .title-soft { color: rgba(231, 236, 245, 0.55); }
+          .title-hard {
+            background: linear-gradient(180deg, #ffffff 0%, #cdd5ec 100%);
+            -webkit-background-clip: text; background-clip: text;
+            color: transparent;
+          }
+    
+          .eyebrow {
+            font-family: "Inter", sans-serif;
+            font-weight: 500;
+            letter-spacing: 0.22em;
+            text-transform: uppercase;
+            font-size: 11px;
+            color: rgba(231, 236, 245, 0.55);
+          }
+          .nav-active-link {
+            color: white;
+            background: rgba(255, 255, 255, 0.08); /* A slightly more pronounced background */
+            font-weight: 600; /* Make it a bit bolder */
+          }
+        </style>
+      </head>
+      <body class="no-select">
+        <div class="stars"></div>
+        <div class="grain"></div>
+        <div class="vignette"></div>
+    
+        <!-- TOP NAV -->
+        <header class="fixed top-0 inset-x-0 z-30 px-8 sm:px-12 py-6 flex items-center justify-between">
+          <div class="flex items-center gap-2.5">
+            <div class="logo-mark w-7 h-7 rounded-lg grid place-items-center">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3a14 14 0 0 1 0 18M12 3a14 14 0 0 0 0 18"/></svg>
+            </div>
+            <span class="font-display font-bold tracking-tight text-[15px]">HuskyHac</span>
+          </div>
+          <nav class="flex items-center gap-4 text-[13px] text-slate-300/70">
+            <div class="relative group">
+              <a class="hidden sm:inline-block px-3 py-1.5 rounded-full hover:text-white hover:bg-white/[0.04] nav-active-link" href="how-it-works.html">How it works</a>
+            </div>
+            <div class="relative group">
+              <a class="hidden sm:inline-block px-3 py-1.5 rounded-full hover:text-white hover:bg-white/[0.04]" href="languages.html">Languages</a>
+            </div>
+            <div class="relative group">
+              <a class="hidden sm:inline-block px-3 py-1.5 rounded-full hover:text-white hover:bg-white/[0.04]" href="research.html">Research</a>
+            </div>
+            <button class="ml-2 rounded-full px-4 py-1.5 ring-soft text-white/85 hover:bg-white/[0.04] hover:text-white">Sign in</button>
+          </nav>
+        </header>
+    <main class="relative z-10 pt-32 pb-16 px-8 sm:px-12 max-w-4xl mx-auto">
+      <h1 class="title-pro text-5xl sm:text-6xl mb-8">
+        <span class="title-hard">How HuskyHac Works</span>
+      </h1>
+      <p class="text-slate-300/75 text-lg leading-relaxed mb-6">
+        HuskyHac offers an innovative approach to language learning through immersive virtual experiences.
+        Our platform simulates real-world scenarios, allowing you to practice new languages in contexts
+        that mimic actual travel situations, from navigating airports to ordering food in a restaurant.
+      </p>
+      <p class="text-slate-300/75 text-lg leading-relaxed mb-6">
+        Here's how you can embark on your linguistic journey with HuskyHac:
+      </p>
+
+      <h2 class="title-pro text-3xl sm:text-4xl mt-12 mb-4">
+        <span class="title-soft">1. Choose Your Destination</span>
+      </h2>
+      <p class="text-slate-300/75 text-lg leading-relaxed mb-6">
+        Select from a variety of virtual countries, each offering unique cultural scenarios and language challenges.
+        Whether you're keen on French in Paris or Spanish in Mexico, your adventure begins with a simple click on our interactive globe.
+      </p>
+
+      <h2 class="title-pro text-3xl sm:text-4xl mt-12 mb-4">
+        <span class="title-soft">2. Immerse in Scenarios</span>
+      </h2>
+      <p class="text-slate-300/75 text-lg leading-relaxed mb-6">
+        Step into detailed 3D environments where you'll encounter AI-powered characters.
+        These characters respond dynamically to your language input, providing a realistic
+        and engaging conversation practice experience.
+      </p>
+
+      <h2 class="title-pro text-3xl sm:text-4xl mt-12 mb-4">
+        <span class="title-soft">3. Learn and Improve</span>
+      </h2>
+      <p class="text-slate-300/75 text-lg leading-relaxed mb-6">
+        Receive instant feedback on your pronunciation, grammar, and vocabulary. Our intelligent
+        system identifies areas for improvement and offers personalized tips and exercises to
+        accelerate your learning curve.
+      </p>
+
+      <h2 class="title-pro text-3xl sm:text-4xl mt-12 mb-4">
+        <span class="title-soft">4. Track Your Progress</span>
+      </h2>
+      <p class="text-slate-300/75 text-lg leading-relaxed mb-6">
+        Monitor your language proficiency growth with comprehensive progress reports.
+        Celebrate milestones and stay motivated as you become more confident in your chosen language.
+      </p>
+
+      <h2 class="title-pro text-3xl sm:text-4xl mt-12 mb-4">
+        <span class="title-soft">Start Your Journey Today!</span>
+      </h2>
+      <p class="text-slate-300/75 text-lg leading-relaxed">
+        Join thousands of learners worldwide who are mastering new languages the HuskyHac way.
+        It's more than just learning; it's experiencing the world, one conversation at a time.
+      </p>
+    </main>
+  </body>
+</html>
