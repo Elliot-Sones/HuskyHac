@@ -28,7 +28,6 @@ export function LandingPage() {
     const iso = (feature?.properties?.ISO_A2 as string | undefined) ?? null;
     const flag = supported?.flag ?? teaser?.flag ?? flagFromIsoA2(iso);
     const [lng, lat] = supported ? supported.centroid : featureCentroid(feature);
-    setIntroMode(false);
     setPin({ lat, lng, flag });
     setSelection({
       name,
