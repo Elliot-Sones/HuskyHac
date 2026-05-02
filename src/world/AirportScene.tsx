@@ -12,6 +12,9 @@ interface AirportSceneProps {
 const signBlue = '#15236f';
 const airportYellow = '#f6d65b';
 const floor = '#d8d8d4';
+const glass = '#cfe1ee';
+const wallPanel = '#ded8cf';
+const metal = '#64748b';
 
 export function AirportScene({ mode, isNearNpc, conversationStatus }: AirportSceneProps) {
   const talking = mode === 'conversation' && conversationStatus === 'speaking';
@@ -20,12 +23,14 @@ export function AirportScene({ mode, isNearNpc, conversationStatus }: AirportSce
     <group>
       <hemisphereLight args={['#dceeff', '#514833', 0.55]} />
 
-      <mesh rotation={[-Math.PI / 2, 0, 0]} receiveShadow>
-        <planeGeometry args={[44, 36]} />
+      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, -0.015, -2]} receiveShadow>
+        <planeGeometry args={[44, 40]} />
         <meshStandardMaterial color={floor} roughness={0.82} metalness={0.04} />
       </mesh>
+      <FloorTiles />
 
       <TerminalWalls />
+      <RearTaxiExterior />
       <FloorWayfinding />
       <InformationDesk mode={mode} talking={talking} isNearNpc={isNearNpc} />
       <ArrivalBoard />
@@ -35,7 +40,7 @@ export function AirportScene({ mode, isNearNpc, conversationStatus }: AirportSce
       <BackgroundPeople />
 
       <group position={[0, 4.1, 6.8]}>
-        <HangingSign width={6.8} label="← Sortie / Exit · Taxis →" sublabel="RER B · Bus · Correspondances" />
+        <HangingSign width={6.8} label="Sortie · Exit · Taxis →" sublabel="RER B · Bus · Correspondances" />
       </group>
 
       <group position={[-8.5, 3.2, -7.4]} rotation={[0, 0.02, 0]}>
@@ -45,18 +50,46 @@ export function AirportScene({ mode, isNearNpc, conversationStatus }: AirportSce
   );
 }
 
+function FloorTiles() {
+  const horizontalLines = Array.from({ length: 17 }, (_, index) => -18 + index * 2);
+  const verticalLines = Array.from({ length: 17 }, (_, index) => -16 + index * 2);
+
+  return (
+    <group>
+      {horizontalLines.map((z) => (
+        <mesh key={`z-${z}`} rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.006, z]}>
+          <planeGeometry args={[32, 0.026]} />
+          <meshStandardMaterial color="#c8c2b6" transparent opacity={0.34} roughness={0.8} />
+        </mesh>
+      ))}
+      {verticalLines.map((x) => (
+        <mesh key={`x-${x}`} rotation={[-Math.PI / 2, 0, 0]} position={[x, 0.007, -2]}>
+          <planeGeometry args={[0.026, 32]} />
+          <meshStandardMaterial color="#c8c2b6" transparent opacity={0.28} roughness={0.8} />
+        </mesh>
+      ))}
+    </group>
+  );
+}
+
 function TerminalWalls() {
   return (
     <group>
-      <mesh position={[0, 3, -10.5]} receiveShadow>
-        <boxGeometry args={[44, 6, 0.35]} />
-        <meshStandardMaterial color="#e7e1d8" roughness={0.9} />
-      </mesh>
-
-      <mesh position={[0, 2.2, -10.25]}>
-        <boxGeometry args={[40, 3.4, 0.08]} />
-        <meshStandardMaterial color="#dbe8f5" roughness={0.22} metalness={0.02} transparent opacity={0.56} />
-      </mesh>
+      {[
+        [-11.8, 8.6],
+        [5.6, 17],
+      ].map(([x, width]) => (
+        <group key={x} position={[x, 0, -10.5]}>
+          <mesh position={[0, 3, 0]} receiveShadow>
+            <boxGeometry args={[width, 6, 0.35]} />
+            <meshStandardMaterial color={wallPanel} roughness={0.9} />
+          </mesh>
+          <mesh position={[0, 2.2, 0.25]}>
+            <boxGeometry args={[width * 0.92, 3.4, 0.08]} />
+            <meshStandardMaterial color={glass} roughness={0.16} metalness={0.02} transparent opacity={0.5} />
+          </mesh>
+        </group>
+      ))}
 
       {[-15, -8, -1, 6, 13].map((x) => (
         <mesh key={x} castShadow position={[x, 3, -10]}>
@@ -64,6 +97,10 @@ function TerminalWalls() {
           <meshStandardMaterial color="#c7c0b3" roughness={0.7} />
         </mesh>
       ))}
+
+      <SideWall side="left" x={-16.1} />
+      <SideWall side="right" x={14.1} />
+      <RearTaxiDoor />
 
       {[-16, -8, 0, 8, 16].map((x) => (
         <mesh key={x} position={[x, 5.55, -3.2]} rotation={[0, 0, -0.12]}>
@@ -75,18 +112,66 @@ function TerminalWalls() {
   );
 }
 
+function SideWall({ side, x }: { side: 'left' | 'right'; x: number }) {
+  const rotationY = side === 'left' ? Math.PI / 2 : -Math.PI / 2;
+
+  return (
+    <group position={[x, 0, 1]} rotation={[0, rotationY, 0]}>
+      <mesh castShadow receiveShadow position={[0, 1.15, 0]}>
+        <boxGeometry args={[23.6, 2.3, 0.28]} />
+        <meshStandardMaterial color="#d5d0c6" roughness={0.82} />
+      </mesh>
+      <mesh position={[0, 3.45, 0.02]}>
+        <boxGeometry args={[22.6, 3.0, 0.09]} />
+        <meshStandardMaterial color={glass} roughness={0.12} metalness={0.04} transparent opacity={0.47} />
+      </mesh>
+      {[-9, -4.5, 0, 4.5, 9].map((z) => (
+        <mesh key={z} castShadow position={[z, 3.15, 0.12]}>
+          <boxGeometry args={[0.18, 5.25, 0.2]} />
+          <meshStandardMaterial color="#a8b0ba" roughness={0.44} metalness={0.25} />
+        </mesh>
+      ))}
+    </group>
+  );
+}
+
+function RearTaxiDoor() {
+  return (
+    <group position={[-5.2, 0, -10.35]}>
+      <mesh castShadow position={[0, 4.35, 0]}>
+        <boxGeometry args={[5.8, 0.52, 0.42]} />
+        <meshStandardMaterial color="#cac3b6" roughness={0.76} />
+      </mesh>
+      <mesh position={[0, 2.2, 0.06]}>
+        <boxGeometry args={[5.3, 3.65, 0.08]} />
+        <meshStandardMaterial color="#d8edf8" transparent opacity={0.28} roughness={0.1} />
+      </mesh>
+      <group position={[0, 3.75, 0.16]}>
+        <HangingSign width={4.9} label="SORTIE · TAXIS" sublabel="Taxi pickup outside" />
+      </group>
+
+      {[-2.9, 2.9].map((x) => (
+        <mesh key={x} castShadow position={[x, 2.1, 0.08]}>
+          <boxGeometry args={[0.16, 4.2, 0.28]} />
+          <meshStandardMaterial color={metal} roughness={0.45} metalness={0.3} />
+        </mesh>
+      ))}
+    </group>
+  );
+}
+
 function FloorWayfinding() {
   return (
     <group>
-      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[-5.2, 0.012, 5.2]}>
-        <planeGeometry args={[2.1, 26]} />
+      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[-5.2, 0.012, 6.4]}>
+        <planeGeometry args={[2.1, 34]} />
         <meshStandardMaterial color="#203da8" roughness={0.78} />
       </mesh>
-      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[-5.2, 0.018, 5.2]}>
-        <planeGeometry args={[0.34, 26]} />
+      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[-5.2, 0.018, 6.4]}>
+        <planeGeometry args={[0.34, 34]} />
         <meshStandardMaterial color={airportYellow} roughness={0.7} />
       </mesh>
-      {[-4, 2.5, 9].map((z) => (
+      {[-5, 2.5, 9.8, 16.4].map((z) => (
         <Text
           key={z}
           rotation={[-Math.PI / 2, 0, 0]}
@@ -99,6 +184,74 @@ function FloorWayfinding() {
           TAXIS →
         </Text>
       ))}
+    </group>
+  );
+}
+
+function RearTaxiExterior() {
+  return (
+    <group>
+      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[-5.2, 0.005, -15.2]}>
+        <planeGeometry args={[12, 8]} />
+        <meshStandardMaterial color="#b9b6ae" roughness={0.86} />
+      </mesh>
+      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[-5.2, 0.02, -16.9]}>
+        <planeGeometry args={[12, 3.8]} />
+        <meshStandardMaterial color="#30343b" roughness={0.72} />
+      </mesh>
+      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[-5.2, 0.04, -12.4]}>
+        <planeGeometry args={[5.3, 2.6]} />
+        <meshStandardMaterial color="#eef5f6" roughness={0.54} />
+      </mesh>
+      <mesh castShadow receiveShadow position={[-5.2, 0.18, -14.2]}>
+        <boxGeometry args={[7.6, 0.32, 0.34]} />
+        <meshStandardMaterial color="#e7c84d" roughness={0.58} />
+      </mesh>
+
+      {[-6.9, -3.3].map((x) => (
+        <Taxi key={x} position={[x, 0.02, -16.8]} />
+      ))}
+
+      <group position={[-5.2, 1.95, -13.1]} rotation={[0, 0, 0]}>
+        <HangingSign width={5.3} label="TAXI PICKUP" sublabel="Prise en charge taxi" />
+      </group>
+
+      {[-7.5, -4.9, -2.3].map((x) => (
+        <mesh key={x} position={[x, 0.055, -16.9]} rotation={[-Math.PI / 2, 0, 0]}>
+          <planeGeometry args={[2.2, 0.12]} />
+          <meshStandardMaterial color="#f8fafc" roughness={0.5} />
+        </mesh>
+      ))}
+    </group>
+  );
+}
+
+function Taxi({ position }: { position: [number, number, number] }) {
+  return (
+    <group position={position} rotation={[0, Math.PI / 2, 0]}>
+      <mesh castShadow position={[0, 0.45, 0]}>
+        <boxGeometry args={[1.55, 0.72, 3.0]} />
+        <meshStandardMaterial color="#f2c230" roughness={0.48} metalness={0.05} />
+      </mesh>
+      <mesh castShadow position={[0, 0.92, -0.15]}>
+        <boxGeometry args={[1.25, 0.55, 1.3]} />
+        <meshStandardMaterial color="#f6d65b" roughness={0.38} />
+      </mesh>
+      <mesh position={[0, 1.23, -0.12]}>
+        <boxGeometry args={[0.82, 0.16, 0.48]} />
+        <meshStandardMaterial color="#102a5c" emissive="#102a5c" emissiveIntensity={0.25} />
+      </mesh>
+      <Text position={[0, 1.25, -0.41]} rotation={[0, 0, 0]} fontSize={0.16} color="#fff7bf" anchorX="center">
+        TAXI
+      </Text>
+      {[-0.65, 0.65].flatMap((x) =>
+        [-0.95, 0.95].map((z) => (
+          <mesh key={`${x}-${z}`} castShadow position={[x, 0.2, z]} rotation={[Math.PI / 2, 0, 0]}>
+            <cylinderGeometry args={[0.2, 0.2, 0.12, 16]} />
+            <meshStandardMaterial color="#111827" roughness={0.52} />
+          </mesh>
+        )),
+      )}
     </group>
   );
 }

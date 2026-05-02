@@ -6,18 +6,36 @@ export const PLAYER_COLLIDER_RADIUS = 0.42;
 export const AIRPORT_NPC_POSITION = new THREE.Vector3(4.7, 0, -4.55);
 
 export const AIRPORT_BOUNDS: WorldBounds = {
-  minX: -15,
-  maxX: 13,
-  minZ: -8.5,
+  minX: -17,
+  maxX: 15,
+  minZ: -20,
   maxZ: 12,
 };
 
 export const AIRPORT_COLLIDERS: WorldCollider[] = [
   {
-    id: 'terminal-back-wall',
+    id: 'terminal-back-wall-left',
     kind: 'rect',
-    center: { x: 0, z: -10.5 },
-    halfExtents: { x: 22, z: 0.24 },
+    center: { x: -11.8, z: -10.5 },
+    halfExtents: { x: 4.3, z: 0.24 },
+  },
+  {
+    id: 'terminal-back-wall-right',
+    kind: 'rect',
+    center: { x: 5.6, z: -10.5 },
+    halfExtents: { x: 8.5, z: 0.24 },
+  },
+  {
+    id: 'terminal-left-wall',
+    kind: 'rect',
+    center: { x: -16.1, z: 1 },
+    halfExtents: { x: 0.25, z: 11.7 },
+  },
+  {
+    id: 'terminal-right-wall',
+    kind: 'rect',
+    center: { x: 14.1, z: 1 },
+    halfExtents: { x: 0.25, z: 11.7 },
   },
   {
     id: 'information-desk',

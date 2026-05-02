@@ -27,7 +27,10 @@ describe('airport physical layout', () => {
   it('treats airport props as data-driven physical objects', () => {
     expect(AIRPORT_COLLIDERS.map((collider) => collider.id)).toEqual(
       expect.arrayContaining([
-        'terminal-back-wall',
+        'terminal-left-wall',
+        'terminal-right-wall',
+        'terminal-back-wall-left',
+        'terminal-back-wall-right',
         'information-desk',
         'arrival-board',
         'baggage-carousel',
@@ -35,5 +38,37 @@ describe('airport physical layout', () => {
         'queue-rope-front',
       ]),
     );
+  });
+
+  it('blocks the solid side walls', () => {
+    const blockedBySideWall = moveCircleWithColliders(
+      { x: 13.7, z: 1.5 },
+      { x: 2, z: 0 },
+      PLAYER_COLLIDER_RADIUS,
+      AIRPORT_COLLIDERS,
+      AIRPORT_BOUNDS,
+    );
+
+    expect(blockedBySideWall.x).toBeLessThan(14);
+  });
+
+  it('keeps the rear taxi doorway open while the rest of the back wall blocks movement', () => {
+    const blockedByBackWall = moveCircleWithColliders(
+      { x: 3.8, z: -9.2 },
+      { x: 0, z: -2.8 },
+      PLAYER_COLLIDER_RADIUS,
+      AIRPORT_COLLIDERS,
+      AIRPORT_BOUNDS,
+    );
+    const throughRearTaxiDoor = moveCircleWithColliders(
+      { x: -5.2, z: -9.2 },
+      { x: 0, z: -2.8 },
+      PLAYER_COLLIDER_RADIUS,
+      AIRPORT_COLLIDERS,
+      AIRPORT_BOUNDS,
+    );
+
+    expect(blockedByBackWall.z).toBeGreaterThan(-10.2);
+    expect(throughRearTaxiDoor.z).toBeLessThan(-11.2);
   });
 });

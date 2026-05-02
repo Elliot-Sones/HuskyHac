@@ -33,8 +33,9 @@ describe('world collision helpers', () => {
       [wall],
     );
 
-    expect(next.x).toBeCloseTo(-2.2, 5);
+    expect(next.x).toBeLessThanOrEqual(-1.42);
     expect(next.z).toBeCloseTo(0.8, 5);
+    expect(pointInsideCollider(next, wall, 0.42)).toBe(false);
   });
 
   it('allows adding new obstacle definitions without changing player code', () => {

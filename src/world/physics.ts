@@ -36,6 +36,26 @@ export function moveCircleWithColliders(
   colliders: WorldCollider[],
   bounds?: WorldBounds,
 ): Vec2 {
+  const distance = Math.hypot(delta.x, delta.z);
+  const maxStep = Math.max(radius * 0.75, 0.08);
+  const steps = Math.max(1, Math.ceil(distance / maxStep));
+  const stepDelta = { x: delta.x / steps, z: delta.z / steps };
+  let next = current;
+
+  for (let step = 0; step < steps; step += 1) {
+    next = moveCircleSingleStep(next, stepDelta, radius, colliders, bounds);
+  }
+
+  return next;
+}
+
+function moveCircleSingleStep(
+  current: Vec2,
+  delta: Vec2,
+  radius: number,
+  colliders: WorldCollider[],
+  bounds?: WorldBounds,
+): Vec2 {
   const desired = constrainToBounds(add(current, delta), radius, bounds);
   if (!collides(desired, radius, colliders)) {
     return desired;
