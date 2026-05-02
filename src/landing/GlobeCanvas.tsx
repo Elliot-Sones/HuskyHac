@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import Globe from 'react-globe.gl';
 import * as THREE from 'three';
 import { COUNTRIES_GEOJSON_URL, flagFromIsoA2, SUPPORTED, TEASERS } from './countries';
@@ -55,6 +55,11 @@ export function GlobeCanvas({ selected, pin, onPickCountry }: Props) {
   const featuresLoadedRef = useRef(false);
   const onPickRef = useRef(onPickCountry);
   const [size, setSize] = useState({ w: window.innerWidth, h: window.innerHeight });
+
+  const oceanMaterial = useMemo(
+    () => new THREE.MeshBasicMaterial({ color: new THREE.Color(OCEAN) }),
+    [],
+  );
 
   // Keep the latest onPickCountry reachable from inside the imperative click handler.
   useEffect(() => {
@@ -212,6 +217,7 @@ export function GlobeCanvas({ selected, pin, onPickCountry }: Props) {
         width={size.w}
         height={size.h}
         backgroundColor="rgba(0,0,0,0)"
+        globeMaterial={oceanMaterial}
         showGlobe
         showAtmosphere
         atmosphereColor="#a8c8ff"
