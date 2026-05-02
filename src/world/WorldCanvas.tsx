@@ -2,9 +2,11 @@ import { Suspense } from 'react';
 import type { ComponentType } from 'react';
 import { Canvas } from '@react-three/fiber';
 import { Environment, KeyboardControls, Loader, PerspectiveCamera } from '@react-three/drei';
-import type { ConversationStatus, SceneMode } from '@/shared/contracts';
+import type { ConversationStatus, PlayerSnapshot, RoomState, SceneMode } from '@/shared/contracts';
 import type { LocalPlayerProfile } from '@/play/playerProfile';
+import type { RemoteSnapshotStore } from '@/multiplayer/remoteSnapshotStore';
 import { PlayerController } from '@/world/PlayerController';
+import { RemotePlayers } from '@/world/RemotePlayer';
 import type {
   WorldConversationFocus,
   WorldLayout,
@@ -24,6 +26,10 @@ interface WorldCanvasProps {
   onTransitInteract: (target: WorldTransitTarget) => void;
   playerProfile: LocalPlayerProfile;
   conversationFocus?: WorldConversationFocus | null;
+  multiplayerRoom?: RoomState | null;
+  multiplayerSelfId?: string;
+  remoteSnapshots?: RemoteSnapshotStore;
+  onPublishSnapshot?: (snapshot: PlayerSnapshot) => void;
 }
 
 const keyMap = [
@@ -46,6 +52,10 @@ export function WorldCanvas({
   onTransitInteract,
   playerProfile,
   conversationFocus = null,
+  multiplayerRoom = null,
+  multiplayerSelfId,
+  remoteSnapshots,
+  onPublishSnapshot,
 }: WorldCanvasProps) {
   return (
     <div data-testid="world-canvas-host" className="absolute inset-0">
@@ -94,7 +104,16 @@ export function WorldCanvas({
               onTransitInteract={onTransitInteract}
               playerProfile={playerProfile}
               conversationFocus={conversationFocus}
+              multiplayerSelfId={multiplayerSelfId}
+              onPublishSnapshot={onPublishSnapshot}
             />
+            {multiplayerRoom && remoteSnapshots && (
+              <RemotePlayers
+                profiles={multiplayerRoom.players}
+                selfId={multiplayerSelfId}
+                snapshots={remoteSnapshots}
+              />
+            )}
           </Suspense>
         </Canvas>
       </KeyboardControls>

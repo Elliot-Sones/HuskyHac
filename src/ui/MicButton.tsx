@@ -8,35 +8,77 @@ interface MicButtonProps {
 
 export function MicButton({ status, isSupported, onToggle }: MicButtonProps) {
   const isRecording = status === 'recording' || status === 'listening';
+  const isDisabled = !isSupported || status === 'thinking' || status === 'speaking';
+
+  const stateClass = isRecording
+    ? 'bg-rose-500 text-white shadow-[0_18px_38px_-10px_rgba(244,63,94,0.55)] hover:bg-rose-400'
+    : 'bg-emerald-300 text-emerald-950 shadow-[0_18px_38px_-10px_rgba(16,185,129,0.45)] hover:bg-emerald-200';
+
+  const label = isRecording
+    ? 'Stop recording'
+    : isSupported
+      ? 'Record French answer'
+      : 'Microphone unavailable';
+
+  const helper = isRecording
+    ? 'Tap to stop'
+    : isSupported
+      ? 'Tap or press M'
+      : 'Type instead';
 
   return (
-    <button
-      type="button"
-      aria-pressed={isRecording}
-      disabled={!isSupported || status === 'thinking' || status === 'speaking'}
-      onClick={onToggle}
-      className={`flex min-w-[12rem] items-center gap-3 rounded-2xl px-4 py-3 text-left shadow-xl transition active:scale-[0.99] disabled:cursor-not-allowed disabled:bg-slate-400 disabled:text-slate-700 disabled:shadow-none ${
-        isRecording
-          ? 'bg-rose-400 text-rose-950 shadow-rose-500/25'
-          : 'bg-emerald-300 text-emerald-950 shadow-emerald-500/20 hover:bg-emerald-200'
-      }`}
-    >
-      <span className="relative grid h-10 w-10 place-items-center rounded-full bg-black/15">
-        <span className="text-[18px]" aria-hidden="true">
-          {isRecording ? '●' : '🎙'}
-        </span>
+    <div className="flex flex-col items-center gap-1.5">
+      <button
+        type="button"
+        aria-label={label}
+        aria-pressed={isRecording}
+        disabled={isDisabled}
+        onClick={onToggle}
+        className={`relative grid h-16 w-16 place-items-center rounded-full transition active:scale-95 disabled:cursor-not-allowed disabled:bg-slate-500 disabled:text-slate-300 disabled:shadow-none ${stateClass}`}
+      >
+        <MicIcon recording={isRecording} />
         {isRecording && (
-          <span className="absolute inset-0 animate-ping rounded-full border border-rose-950/40" />
+          <span
+            aria-hidden="true"
+            className="absolute inset-0 animate-ping rounded-full border-2 border-rose-300/60"
+          />
         )}
+      </button>
+      <span className="text-[10px] font-bold uppercase tracking-[0.22em] text-slate-400">
+        {helper}
       </span>
-      <span>
-        <span className="block text-[13px] font-extrabold">
-          {isRecording ? 'Recording' : 'Record answer'}
-        </span>
-        <span className="block text-[11px] font-semibold opacity-70">
-          {isRecording ? 'Tap again to stop' : isSupported ? 'Tap mic or press M' : 'Type instead'}
-        </span>
-      </span>
-    </button>
+    </div>
+  );
+}
+
+function MicIcon({ recording }: { recording: boolean }) {
+  if (recording) {
+    return (
+      <svg
+        viewBox="0 0 24 24"
+        fill="currentColor"
+        aria-hidden="true"
+        className="h-5 w-5"
+      >
+        <rect x="6" y="6" width="12" height="12" rx="2" />
+      </svg>
+    );
+  }
+
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth={2.2}
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+      className="h-6 w-6"
+    >
+      <rect x="9" y="3" width="6" height="12" rx="3" />
+      <path d="M5 11a7 7 0 0 0 14 0" />
+      <path d="M12 18v3" />
+    </svg>
   );
 }

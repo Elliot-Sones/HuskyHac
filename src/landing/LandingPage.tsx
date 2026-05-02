@@ -82,9 +82,9 @@ export function LandingPage() {
 
       <CountryChip
         visible={!!selection}
-        flag={selection?.flag ?? '🇫🇷'}
-        name={selection?.name ?? 'France'}
-        meta={selection?.meta ?? 'French · A1 → B2 routes'}
+        flag={selection?.flag ?? '🏳️'}
+        name={selection?.name ?? ''}
+        meta={selection?.meta ?? ''}
         onClear={handleClear}
       />
 
@@ -101,7 +101,7 @@ export function LandingPage() {
 
       <StartCTA
         visible={!!selection}
-        flag={selection?.flag ?? '🇫🇷'}
+        flag={selection?.flag ?? '🏳️'}
         label={ctaLabel}
         subline={ctaSubline}
         disabled={!selection}

@@ -5,6 +5,8 @@ import { ArrivalTransition } from '@/play/ArrivalTransition';
 import { PlayerEntryMock } from '@/play/PlayerEntryMock';
 import { resolvePlayDestination, type PlayDestination } from '@/play/destinations';
 import { readLocalPlayerProfile, type LocalPlayerProfile } from '@/play/playerProfile';
+import { MultiplayerLobby } from '@/multiplayer/MultiplayerLobby';
+import { MultiplayerProvider, useMultiplayer } from '@/multiplayer/MultiplayerProvider';
 import { LessonProvider, useLessonStore } from '@/state/lessonStore';
 import { ConversationPanel } from '@/ui/ConversationPanel';
 import { TransitConversationPanel } from '@/ui/TransitConversationPanel';
@@ -39,9 +41,11 @@ export function PlayWorld() {
   }
 
   return (
-    <LessonProvider key={destination.id} scenario={destination.scenario}>
-      <PlayWorldInner destination={destination} playerProfile={playerProfile} />
-    </LessonProvider>
+    <MultiplayerProvider>
+      <LessonProvider key={destination.id} scenario={destination.scenario}>
+        <PlayWorldInner destination={destination} playerProfile={playerProfile} />
+      </LessonProvider>
+    </MultiplayerProvider>
   );
 }
 
@@ -53,6 +57,7 @@ function PlayWorldInner({
   playerProfile: LocalPlayerProfile;
 }) {
   const lesson = useLessonStore();
+  const multiplayer = useMultiplayer();
   const [mode, setMode] = useState<SceneMode>('world');
   const [isNearNpc, setIsNearNpc] = useState(false);
   const [nearTransit, setNearTransit] = useState<WorldTransitTarget | null>(null);
@@ -99,7 +104,13 @@ function PlayWorldInner({
         onTransitInteract={(target) => setActiveTransit(target)}
         conversationFocus={activeTransitFocus}
         playerProfile={playerProfile}
+        multiplayerRoom={multiplayer.room}
+        multiplayerSelfId={multiplayer.self?.id}
+        remoteSnapshots={multiplayer.remoteSnapshots}
+        onPublishSnapshot={multiplayer.publishSnapshot}
       />
+
+      <MultiplayerLobby />
 
       {mode === 'world' && !activeTransitDialogue && (
         <WorldHud

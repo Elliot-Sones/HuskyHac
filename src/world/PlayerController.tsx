@@ -2,7 +2,8 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { useFrame, useThree } from '@react-three/fiber';
 import { useKeyboardControls } from '@react-three/drei';
 import * as THREE from 'three';
-import type { SceneMode } from '@/shared/contracts';
+import type { PlayerSnapshot, SceneMode } from '@/shared/contracts';
+import { createSnapshotPublisher } from '@/multiplayer/snapshotPublisher';
 import type { LocalPlayerProfile } from '@/play/playerProfile';
 import { Character } from '@/world/Character';
 import { PLAYER_COLLIDER_RADIUS } from '@/world/airportLayout';
@@ -18,6 +19,8 @@ interface PlayerControllerProps {
   onTransitInteract: (target: WorldTransitTarget) => void;
   playerProfile: LocalPlayerProfile;
   conversationFocus?: WorldConversationFocus | null;
+  multiplayerSelfId?: string;
+  onPublishSnapshot?: (snapshot: PlayerSnapshot) => void;
 }
 
 const interactRadius = 3.3;
@@ -34,6 +37,8 @@ export function PlayerController({
   onTransitInteract,
   playerProfile,
   conversationFocus = null,
+  multiplayerSelfId,
+  onPublishSnapshot,
 }: PlayerControllerProps) {
   const playerRef = useRef<THREE.Group>(null);
   const visualRef = useRef<THREE.Group>(null);
@@ -47,6 +52,13 @@ export function PlayerController({
   const { camera } = useThree();
   const layoutRef = useRef(layout);
   const conversationFocusRef = useRef(conversationFocus);
+  const snapshotPublisher = useMemo(
+    () =>
+      createSnapshotPublisher({
+        publish: (snapshot) => onPublishSnapshot?.(snapshot),
+      }),
+    [onPublishSnapshot],
+  );
 
   const conversationFallbackLook = useMemo(() => new THREE.Vector3(0, 1.55, 0.2), []);
 
@@ -62,7 +74,12 @@ export function PlayerController({
     targetRotation.current = layout.playerStartRotation;
     onNearNpcChange(false);
     onNearTransitChange(null);
+    snapshotPublisher.reset();
   }, [layout.id, layout.playerStartRotation, onNearNpcChange, onNearTransitChange]);
+
+  useEffect(() => {
+    snapshotPublisher.reset();
+  }, [multiplayerSelfId, snapshotPublisher]);
 
   useEffect(() => {
     function handleKeyDown(event: KeyboardEvent) {
@@ -81,6 +98,23 @@ export function PlayerController({
     if (walkingState.current === nextWalking) return;
     walkingState.current = nextWalking;
     setWalking(nextWalking);
+  }
+
+  function publishLocalSnapshot(player: THREE.Group, isWalking: boolean, isRunning: boolean) {
+    if (!multiplayerSelfId || !onPublishSnapshot) return;
+
+    snapshotPublisher.tryPublish({
+      playerId: multiplayerSelfId,
+      position: {
+        x: player.position.x,
+        y: player.position.y,
+        z: player.position.z,
+      },
+      rotationY: player.rotation.y,
+      walking: isWalking,
+      running: isRunning,
+      mode,
+    });
   }
 
   useFrame((_state, delta) => {
@@ -140,6 +174,7 @@ export function PlayerController({
           window.__huskyAvatarDebug = undefined;
         }
       }
+      publishLocalSnapshot(player, false, false);
       return;
     }
 
@@ -226,6 +261,7 @@ export function PlayerController({
     };
     window.__huskyPlayerProfile = playerProfile;
 
+    publishLocalSnapshot(player, moving, Boolean(keys.run && moving));
   });
 
   return (

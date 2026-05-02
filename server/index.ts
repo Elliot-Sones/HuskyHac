@@ -16,16 +16,22 @@ interface ServerOptions {
   host?: string;
   port?: number;
   registry?: RoomRegistry;
+  corsOrigins?: Array<string | RegExp>;
 }
 
-export function createHuskyMultiplayerServer({ registry = new RoomRegistry() }: ServerOptions = {}) {
+const localDevOrigins = [/^http:\/\/127\.0\.0\.1:\d+$/, /^http:\/\/localhost:\d+$/];
+
+export function createHuskyMultiplayerServer({
+  registry = new RoomRegistry(),
+  corsOrigins = [],
+}: ServerOptions = {}) {
   const app = express();
   const httpServer = createServer(app);
   const io = new Server<ClientToServerEvents, ServerToClientEvents, InterServerEvents, SocketData>(
     httpServer,
     {
       cors: {
-        origin: [/^http:\/\/127\.0\.0\.1:\d+$/, /^http:\/\/localhost:\d+$/],
+        origin: resolveCorsOrigins(corsOrigins),
       },
       maxHttpBufferSize: 32 * 1024,
     },
@@ -122,6 +128,15 @@ export async function startServer({ host = '127.0.0.1', port = Number(process.en
   });
   console.log(`HuskyHac multiplayer server listening on http://${host}:${port}`);
   return server;
+}
+
+export function resolveCorsOrigins(extraOrigins: Array<string | RegExp> = []) {
+  const configuredOrigins = (process.env.CORS_ORIGINS ?? process.env.CORS_ORIGIN ?? '')
+    .split(',')
+    .map((origin) => origin.trim())
+    .filter(Boolean);
+
+  return [...localDevOrigins, ...configuredOrigins, ...extraOrigins];
 }
 
 if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {

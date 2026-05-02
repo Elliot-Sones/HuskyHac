@@ -47,7 +47,8 @@ const profileColors = ['#2563eb', '#16a34a', '#ea580c', '#9333ea'];
 const MultiplayerContext = createContext<MultiplayerContextValue | null>(null);
 
 export function MultiplayerProvider({ children }: { children: ReactNode }) {
-  const disabled = import.meta.env.VITE_MULTIPLAYER_DISABLED === '1';
+  const multiplayerUrl = getConfiguredMultiplayerUrl();
+  const disabled = isMultiplayerDisabled(multiplayerUrl);
   const remoteSnapshots = useMemo(() => new RemoteSnapshotStore(), []);
   const transportRef = useRef<MultiplayerTransport | null>(null);
   const unsubscribersRef = useRef<Unsubscribe[]>([]);
@@ -73,7 +74,7 @@ export function MultiplayerProvider({ children }: { children: ReactNode }) {
 
     const transport = disabled
       ? new FakeMultiplayerTransport()
-      : new SocketIoMultiplayerTransport(import.meta.env.VITE_MULTIPLAYER_URL);
+      : new SocketIoMultiplayerTransport(multiplayerUrl);
     transportRef.current = transport;
 
     unsubscribersRef.current = [
@@ -205,6 +206,17 @@ function loadProfileDraft(): ProfileDraft {
     color: savedColor && profileColors.includes(savedColor) ? savedColor : profileColors[0],
     accessory: savedAccessory ?? 'backpack',
   };
+}
+
+function getConfiguredMultiplayerUrl() {
+  const url = import.meta.env.VITE_MULTIPLAYER_URL;
+  return typeof url === 'string' && url.trim() ? url.trim() : undefined;
+}
+
+function isMultiplayerDisabled(multiplayerUrl?: string) {
+  if (import.meta.env.VITE_MULTIPLAYER_DISABLED === '1') return true;
+
+  return Boolean(import.meta.env.PROD && !multiplayerUrl);
 }
 
 function getOrCreatePlayerToken() {
