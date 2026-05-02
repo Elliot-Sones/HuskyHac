@@ -79,15 +79,7 @@ function createInitialState(scenario: Scenario): LessonState {
   return {
     scenario,
     turnIndex: 0,
-    transcript: [
-      {
-        id: 'coach-intro',
-        speaker: 'coach',
-        text: scenario.goal,
-        translation: 'Lesson goal',
-      },
-      scenario.turns[0].npcLine,
-    ],
+    transcript: [scenario.turns[0].npcLine],
     status: 'speaking',
     selectedResponseId: null,
     lastMatchScore: null,
