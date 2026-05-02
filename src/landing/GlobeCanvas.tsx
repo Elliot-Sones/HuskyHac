@@ -47,13 +47,15 @@ function buildLabel(d: Feature): string {
 export function GlobeCanvas({ selected, pin, onPickCountry }: Props) {
   const globeRef = useRef<any>(null);
   const hostRef = useRef<HTMLDivElement>(null);
+  // Mutable hover/selected so polygon accessors always read the latest values.
+  // (React state would create stale closures across the three-globe boundary.)
   const stateRef = useRef<{ selected: string | null; hovered: string | null }>({
     selected: null,
     hovered: null,
   });
   const hasFlownInRef = useRef(false);
-  const featuresLoadedRef = useRef(false);
   const onPickRef = useRef(onPickCountry);
+  const [features, setFeatures] = useState<Feature[]>([]);
   const [size, setSize] = useState({ w: window.innerWidth, h: window.innerHeight });
 
   const oceanMaterial = useMemo(
@@ -61,38 +63,53 @@ export function GlobeCanvas({ selected, pin, onPickCountry }: Props) {
     [],
   );
 
-  // Keep the latest onPickCountry reachable from inside the imperative click handler.
+  // Keep imperative click handler reaching the latest onPickCountry.
   useEffect(() => {
     onPickRef.current = onPickCountry;
   });
 
-  // Track viewport so the globe canvas resizes responsively.
+  // Resize handler.
   useEffect(() => {
     const onResize = () => setSize({ w: window.innerWidth, h: window.innerHeight });
     window.addEventListener('resize', onResize);
     return () => window.removeEventListener('resize', onResize);
   }, []);
 
-  // One-time imperative configuration of the globe. Mirrors the order from the
-  // working mockup so three-globe sees a consistent setup sequence.
+  // Load country features once.
   useEffect(() => {
     let cancelled = false;
-    let cleanupListeners: (() => void) | null = null;
+    fetch(COUNTRIES_GEOJSON_URL)
+      .then((r) => r.json())
+      .then((geo) => {
+        if (cancelled) return;
+        setFeatures(
+          geo.features.filter((f: Feature) => f.properties.ADMIN !== 'Antarctica'),
+        );
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
-    const setupId = window.setTimeout(() => {
+  // One-time imperative configuration of the globe (controls + ocean material).
+  useEffect(() => {
+    const id = window.setTimeout(() => {
       const world = globeRef.current;
-      const host = hostRef.current;
-      if (!world || !host) return;
+      if (!world) return;
 
       try {
         const mat = world.globeMaterial() as THREE.MeshPhongMaterial;
         mat.color.set(OCEAN);
-        mat.emissive.set(OCEAN);
-        mat.emissiveIntensity = 1;
-        mat.shininess = 0;
+        if ('emissive' in mat) {
+          mat.emissive.set(OCEAN);
+          mat.emissiveIntensity = 1;
+        }
+        if ('shininess' in mat) {
+          mat.shininess = 0;
+        }
         mat.needsUpdate = true;
       } catch {
-        // material may not be ready yet
+        /* material not ready */
       }
 
       const controls = world.controls();
@@ -105,86 +122,38 @@ export function GlobeCanvas({ selected, pin, onPickCountry }: Props) {
       controls.maxDistance = 600;
       controls.enablePan = false;
 
-      const stopAuto = () => {
-        controls.autoRotate = false;
-      };
-      const evs: Array<keyof DocumentEventMap> = ['mousedown', 'touchstart', 'wheel'];
-      evs.forEach((ev) => host.addEventListener(ev, stopAuto, { passive: true }));
-      cleanupListeners = () => evs.forEach((ev) => host.removeEventListener(ev, stopAuto));
-
       world.pointOfView({ lat: 28, lng: 6, altitude: 2.35 }, 1400);
-
-      // Set the html-element renderer once so subsequent htmlElementsData
-      // updates re-use the same renderer.
-      world
-        .htmlElement((d: any) => {
-          const el = document.createElement('div');
-          el.className = 'flag-pin';
-          el.textContent = d.flag;
-          return el;
-        })
-        .htmlAltitude(0.07);
-
-      // Load countries and wire up polygon visuals + interactions imperatively.
-      fetch(COUNTRIES_GEOJSON_URL)
-        .then((r) => r.json())
-        .then((geo) => {
-          if (cancelled) return;
-          const features = geo.features.filter(
-            (f: Feature) => f.properties.ADMIN !== 'Antarctica',
-          );
-
-          world
-            .polygonsData(features)
-            .polygonsTransitionDuration(380)
-            .polygonSideColor(() => LAND_DARK)
-            .polygonStrokeColor(() => 'rgba(0,0,0,0.32)')
-            .polygonAltitude((d: any) => {
-              const name = d.properties.ADMIN;
-              if (stateRef.current.selected === name) return 0.055;
-              if (stateRef.current.hovered === name) return 0.038;
-              return 0.014;
-            })
-            .polygonCapColor((d: any) => {
-              const name = d.properties.ADMIN;
-              if (stateRef.current.selected === name) return LAND_SELECT;
-              if (stateRef.current.hovered === name) return LAND_HOVER;
-              if (SUPPORTED[name]) return LAND_SUPPORTED;
-              if (TEASERS[name]) return LAND_TEASER;
-              return LAND;
-            })
-            .polygonLabel((d: any) => buildLabel(d))
-            .onPolygonHover((p: any) => {
-              stateRef.current.hovered = p ? p.properties.ADMIN : null;
-              document.body.style.cursor = p ? 'pointer' : 'default';
-              world.polygonAltitude(world.polygonAltitude());
-              world.polygonCapColor(world.polygonCapColor());
-            })
-            .onPolygonClick((p: any) => {
-              if (!p) return;
-              onPickRef.current(p.properties.ADMIN as string, p);
-            });
-
-          featuresLoadedRef.current = true;
-        });
     }, 0);
-
-    return () => {
-      cancelled = true;
-      window.clearTimeout(setupId);
-      if (cleanupListeners) cleanupListeners();
-    };
+    return () => window.clearTimeout(id);
   }, []);
 
-  // Sync `selected` -> internal state, refresh polygon visuals, animate camera.
+  // Pause autorotate on user interaction.
   useEffect(() => {
-    const world = globeRef.current;
-    if (!world || !featuresLoadedRef.current) return;
+    const el = hostRef.current;
+    if (!el) return;
+    const stop = () => {
+      const c = globeRef.current?.controls();
+      if (c) c.autoRotate = false;
+    };
+    const evs: Array<keyof DocumentEventMap> = ['mousedown', 'touchstart', 'wheel'];
+    evs.forEach((ev) => el.addEventListener(ev, stop, { passive: true }));
+    return () => evs.forEach((ev) => el.removeEventListener(ev, stop));
+  }, []);
 
+  // When the React `selected` prop changes, mirror it into stateRef and force
+  // three-globe to re-evaluate the polygon accessors. Then animate the camera.
+  useEffect(() => {
     stateRef.current.selected = selected;
-    world.polygonAltitude(world.polygonAltitude());
-    world.polygonCapColor(world.polygonCapColor());
-
+    const world = globeRef.current;
+    if (!world) return;
+    if (features.length > 0) {
+      try {
+        world.polygonAltitude(world.polygonAltitude());
+        world.polygonCapColor(world.polygonCapColor());
+      } catch {
+        /* ignore */
+      }
+    }
     const controls = world.controls();
     if (selected && pin) {
       controls.autoRotate = false;
@@ -201,14 +170,7 @@ export function GlobeCanvas({ selected, pin, onPickCountry }: Props) {
     } else {
       controls.autoRotate = true;
     }
-  }, [selected, pin]);
-
-  // Sync `pin` -> the single html element on the globe.
-  useEffect(() => {
-    const world = globeRef.current;
-    if (!world || !featuresLoadedRef.current) return;
-    world.htmlElementsData(pin ? [pin] : []);
-  }, [pin]);
+  }, [selected, pin, features.length]);
 
   return (
     <div ref={hostRef} className="globe-host">
@@ -222,6 +184,52 @@ export function GlobeCanvas({ selected, pin, onPickCountry }: Props) {
         showAtmosphere
         atmosphereColor="#a8c8ff"
         atmosphereAltitude={0.18}
+        polygonsData={features}
+        polygonsTransitionDuration={380}
+        polygonAltitude={(d: any) => {
+          const name = d.properties.ADMIN;
+          if (stateRef.current.selected === name) return 0.055;
+          if (stateRef.current.hovered === name) return 0.038;
+          return 0.014;
+        }}
+        polygonCapColor={(d: any) => {
+          const name = d.properties.ADMIN;
+          if (stateRef.current.selected === name) return LAND_SELECT;
+          if (stateRef.current.hovered === name) return LAND_HOVER;
+          if (SUPPORTED[name]) return LAND_SUPPORTED;
+          if (TEASERS[name]) return LAND_TEASER;
+          return LAND;
+        }}
+        polygonSideColor={() => LAND_DARK}
+        polygonStrokeColor={() => 'rgba(0,0,0,0.32)'}
+        polygonLabel={buildLabel as any}
+        onPolygonHover={(p: any) => {
+          stateRef.current.hovered = p ? p.properties.ADMIN : null;
+          document.body.style.cursor = p ? 'pointer' : 'default';
+          const g = globeRef.current;
+          if (g) {
+            try {
+              g.polygonAltitude(g.polygonAltitude());
+              g.polygonCapColor(g.polygonCapColor());
+            } catch {
+              /* ignore */
+            }
+          }
+        }}
+        onPolygonClick={(p: any) => {
+          if (!p) return;
+          onPickRef.current(p.properties.ADMIN as string, p);
+        }}
+        htmlElementsData={pin ? [pin] : []}
+        htmlElement={
+          ((d: any) => {
+            const el = document.createElement('div');
+            el.className = 'flag-pin';
+            el.textContent = d.flag;
+            return el;
+          }) as any
+        }
+        htmlAltitude={0.07}
       />
     </div>
   );
