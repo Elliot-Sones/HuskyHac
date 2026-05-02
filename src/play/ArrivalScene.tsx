@@ -238,7 +238,7 @@ function Plane() {
   const dustLeftRef = useRef<THREE.Mesh>(null);
   const dustRightRef = useRef<THREE.Mesh>(null);
   const startRef = useRef<number | null>(null);
-  const touchdownPos = useMemo(() => new THREE.Vector3(0, 0.6, -2), []);
+  const touchdownPos = useMemo(() => new THREE.Vector3(0, 0.98, -2), []);
 
   useFrame((state) => {
     const group = groupRef.current;
@@ -248,7 +248,7 @@ function Plane() {
     const t = Math.min(elapsed / ARRIVAL_DURATION, 1);
 
     const start = new THREE.Vector3(-13, 13, 30);
-    const exit = new THREE.Vector3(0, 0.6, -58);
+    const exit = new THREE.Vector3(0, 0.98, -58);
 
     let pos: THREE.Vector3;
     let pitch: number;
@@ -408,8 +408,8 @@ function CameraRig() {
     const camTouch = new THREE.Vector3(7.4, 1.7, 10);
     const camEnd = new THREE.Vector3(5.4, 1.1, 7.5);
     const lookStart = new THREE.Vector3(-2, 6, 10);
-    const lookTouch = new THREE.Vector3(0, 0.7, -3);
-    const lookEnd = new THREE.Vector3(0, 0.6, -28);
+    const lookTouch = new THREE.Vector3(0, 1.0, -3);
+    const lookEnd = new THREE.Vector3(0, 0.9, -28);
 
     let pos: THREE.Vector3;
     let look: THREE.Vector3;
