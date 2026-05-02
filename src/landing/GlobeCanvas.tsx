@@ -9,8 +9,8 @@ type Feature = {
   geometry: any;
 };
 
-const OCEAN = '#0e2c4f';
-const OCEAN_GLOW = '#0a2a55';
+const OCEAN = '#1e63b8';
+const OCEAN_GLOW = '#2a7ad9';
 const LAND = '#5b9c79';
 const LAND_DARK = '#2c5e44';
 const LAND_SUPPORTED = '#86b89c';
