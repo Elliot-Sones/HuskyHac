@@ -3,14 +3,14 @@ import type { WorldConversationFocus, WorldTransitTarget } from '@/world/worldLa
 
 export function createTransitConversationFocus(target: WorldTransitTarget): WorldConversationFocus {
   if (target.id === 'taxi') {
-    const taxiSeat = new THREE.Vector3(-7.05, 0.42, -16.82);
+    const taxiSeat = new THREE.Vector3(-7.05, 0.16, -16.82);
 
     return {
-      camera: taxiSeat.clone().add(new THREE.Vector3(0.45, 1.8, 2.85)),
-      look: taxiSeat.clone().add(new THREE.Vector3(0, 0.3, 0)),
+      camera: taxiSeat.clone().add(new THREE.Vector3(0.45, 1.9, 2.7)),
+      look: taxiSeat.clone().add(new THREE.Vector3(0, 0.82, 0)),
       avatarPosition: taxiSeat,
       avatarRotationY: Math.PI / 2,
-      avatarScale: 0.62,
+      avatarScale: 0.48,
     };
   }
 

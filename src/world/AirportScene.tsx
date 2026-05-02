@@ -379,6 +379,10 @@ function Taxi({ position }: { position: [number, number, number] }) {
         <boxGeometry args={[1.25, 0.55, 1.3]} />
         <meshStandardMaterial color="#f6d65b" roughness={0.38} />
       </mesh>
+      <mesh position={[-0.64, 0.99, -0.15]}>
+        <boxGeometry args={[0.035, 0.34, 0.96]} />
+        <meshStandardMaterial color={glass} roughness={0.12} transparent opacity={0.5} />
+      </mesh>
       <mesh position={[0, 1.23, -0.12]}>
         <boxGeometry args={[0.82, 0.16, 0.48]} />
         <meshStandardMaterial color="#102a5c" emissive="#102a5c" emissiveIntensity={0.25} />

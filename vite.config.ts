@@ -1,33 +1,39 @@
 /// <reference types="vitest" />
-import { defineConfig, type Plugin } from 'vite';
+import { defineConfig, loadEnv, type Plugin } from 'vite';
 import react from '@vitejs/plugin-react';
 import { configDefaults } from 'vitest/config';
 
-export default defineConfig({
-  plugins: [react(), backboardDevProxy()],
-  resolve: {
-    alias: { '@': new URL('./src', import.meta.url).pathname },
-  },
-  server: {
-    port: 5173,
-    host: '127.0.0.1',
-    proxy: {
-      '/api': {
-        target: 'http://127.0.0.1:8787',
-        changeOrigin: true,
-      },
-      '/socket.io': {
-        target: 'ws://127.0.0.1:8787',
-        ws: true,
+type DevProxyEnv = Record<string, string>;
+
+export default defineConfig(({ mode }) => {
+  const env = loadEnv(mode, process.cwd(), '');
+
+  return {
+    plugins: [react(), backboardDevProxy(env)],
+    resolve: {
+      alias: { '@': new URL('./src', import.meta.url).pathname },
+    },
+    server: {
+      port: 5173,
+      host: '127.0.0.1',
+      proxy: {
+        '/api': {
+          target: 'http://127.0.0.1:8787',
+          changeOrigin: true,
+        },
+        '/socket.io': {
+          target: 'ws://127.0.0.1:8787',
+          ws: true,
+        },
       },
     },
-  },
-  test: {
-    exclude: [...configDefaults.exclude, 'tests/e2e/**', 'mock/**', 'dist-server/**'],
-  },
+    test: {
+      exclude: [...configDefaults.exclude, 'tests/e2e/**', 'mock/**', 'dist-server/**'],
+    },
+  };
 });
 
-function backboardDevProxy(): Plugin {
+function backboardDevProxy(env: DevProxyEnv): Plugin {
   return {
     name: 'backboard-dev-proxy',
     configureServer(server) {
@@ -37,7 +43,7 @@ function backboardDevProxy(): Plugin {
           return;
         }
 
-        const apiKey = getEnv('OPENAI_API_KEY');
+        const apiKey = getEnv('OPENAI_API_KEY', env);
 
         if (!apiKey) {
           sendJson(res, 503, { error: 'OPENAI_API_KEY is not configured.' });
@@ -52,7 +58,7 @@ function backboardDevProxy(): Plugin {
               Authorization: `Bearer ${apiKey}`,
               'Content-Type': 'application/json',
             },
-            body: JSON.stringify(buildOpenAiResponsesPayload(payload)),
+            body: JSON.stringify(buildOpenAiResponsesPayload(payload, env)),
           });
           const json = await upstream.json();
 
@@ -75,7 +81,7 @@ function backboardDevProxy(): Plugin {
           return;
         }
 
-        const apiKey = getEnv('OPENAI_API_KEY');
+        const apiKey = getEnv('OPENAI_API_KEY', env);
 
         if (!apiKey) {
           sendJson(res, 503, { error: 'OPENAI_API_KEY is not configured.' });
@@ -98,8 +104,8 @@ function backboardDevProxy(): Plugin {
               'Content-Type': 'application/json',
             },
             body: JSON.stringify({
-              model: getEnv('OPENAI_TTS_MODEL') || 'gpt-4o-mini-tts',
-              voice: getEnv('OPENAI_TTS_VOICE') || 'marin',
+              model: getEnv('OPENAI_TTS_MODEL', env) || 'gpt-4o-mini-tts',
+              voice: getEnv('OPENAI_TTS_VOICE', env) || 'marin',
               input: text,
               instructions:
                 'Speak as a calm French airport information-desk agent. Use clear Parisian French, warm but concise.',
@@ -124,7 +130,7 @@ function backboardDevProxy(): Plugin {
           return;
         }
 
-        const apiKey = getEnv('OPENAI_API_KEY');
+        const apiKey = getEnv('OPENAI_API_KEY', env);
 
         if (!apiKey) {
           sendJson(res, 503, { error: 'OPENAI_API_KEY is not configured.' });
@@ -165,7 +171,7 @@ function backboardDevProxy(): Plugin {
           return;
         }
 
-        const apiKey = getEnv('BACKBOARD_API_KEY');
+        const apiKey = getEnv('BACKBOARD_API_KEY', env);
 
         if (!apiKey) {
           sendJson(res, 503, { error: 'BACKBOARD_API_KEY is not configured.' });
@@ -197,9 +203,9 @@ function backboardDevProxy(): Plugin {
   };
 }
 
-function buildOpenAiResponsesPayload(payload: any) {
+function buildOpenAiResponsesPayload(payload: any, env: DevProxyEnv) {
   return {
-    model: getEnv('OPENAI_LLM_MODEL') || 'gpt-4o-mini',
+    model: getEnv('OPENAI_LLM_MODEL', env) || 'gpt-4o-mini',
     input: [
       {
         role: 'developer',
@@ -337,7 +343,9 @@ function sendJson(res: any, statusCode: number, payload: unknown) {
   res.end(JSON.stringify(payload));
 }
 
-function getEnv(name: string) {
-  return (globalThis as typeof globalThis & { process?: { env?: Record<string, string> } }).process
-    ?.env?.[name];
+function getEnv(name: string, env: DevProxyEnv) {
+  return (
+    (globalThis as typeof globalThis & { process?: { env?: Record<string, string> } }).process
+      ?.env?.[name] ?? env[name]
+  );
 }
