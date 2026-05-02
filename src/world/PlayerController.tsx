@@ -32,6 +32,8 @@ export function PlayerController({ mode, onNearNpcChange, onInteract }: PlayerCo
 
   const followOffset = useMemo(() => new THREE.Vector3(0, 4.7, 7.4), []);
   const lookOffset = useMemo(() => new THREE.Vector3(0, 1.25, -0.6), []);
+  const outdoorFollowOffset = useMemo(() => new THREE.Vector3(0, 4.5, 3.4), []);
+  const outdoorLookOffset = useMemo(() => new THREE.Vector3(0, 1.15, -0.25), []);
   const conversationCamera = useMemo(() => new THREE.Vector3(4.5, 2.45, 2.35), []);
   const conversationLook = useMemo(() => AIRPORT_NPC_POSITION.clone().add(new THREE.Vector3(0, 1.55, 0.2)), []);
 
@@ -105,8 +107,9 @@ export function PlayerController({ mode, onNearNpcChange, onInteract }: PlayerCo
       onNearNpcChange(near);
     }
 
-    const targetCam = player.position.clone().add(followOffset);
-    const lookAt = player.position.clone().add(lookOffset);
+    const outsideTerminal = player.position.z < -11;
+    const targetCam = player.position.clone().add(outsideTerminal ? outdoorFollowOffset : followOffset);
+    const lookAt = player.position.clone().add(outsideTerminal ? outdoorLookOffset : lookOffset);
     camera.position.lerp(targetCam, 0.08);
     camera.lookAt(lookAt);
 
