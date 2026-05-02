@@ -220,12 +220,29 @@ function isMultiplayerDisabled(multiplayerUrl?: string) {
 }
 
 function getOrCreatePlayerToken() {
-  const existing = readLocalStorage('huskyhac.playerToken');
+  const existing = readSessionStorage('huskyhac.playerToken');
   if (existing) return existing;
 
   const token = window.crypto?.randomUUID?.() ?? `player-${Math.random().toString(36).slice(2)}-${Date.now()}`;
-  writeLocalStorage('huskyhac.playerToken', token);
+  writeSessionStorage('huskyhac.playerToken', token);
   return token;
+}
+
+function readSessionStorage(key: string) {
+  try {
+    const storage = getSessionStorage();
+    return storage?.getItem(key) ?? null;
+  } catch {
+    return null;
+  }
+}
+
+function writeSessionStorage(key: string, value: string) {
+  try {
+    getSessionStorage()?.setItem(key, value);
+  } catch {
+    // Browser privacy modes and test harnesses can expose storage but reject writes.
+  }
 }
 
 function readLocalStorage(key: string) {
@@ -248,6 +265,15 @@ function writeLocalStorage(key: string, value: string) {
 function getLocalStorage() {
   if (typeof window === 'undefined') return null;
   const storage = window.localStorage;
+  if (!storage || typeof storage.getItem !== 'function' || typeof storage.setItem !== 'function') {
+    return null;
+  }
+  return storage;
+}
+
+function getSessionStorage() {
+  if (typeof window === 'undefined') return null;
+  const storage = window.sessionStorage;
   if (!storage || typeof storage.getItem !== 'function' || typeof storage.setItem !== 'function') {
     return null;
   }
