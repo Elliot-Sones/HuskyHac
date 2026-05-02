@@ -56,15 +56,37 @@ export function StarField() {
   }, []);
 
   const shootings = useMemo<Shooting[]>(() => {
-    return Array.from({ length: SHOOTING_COUNT }, () => ({
-      top: rand(-5, 60),
-      left: rand(-10, 70),
-      angle: rand(14, 32),
-      length: rand(140, 320),
-      thickness: rand(1.2, 2.2),
-      delay: rand(0, 22),
-      cycle: rand(7, 16),
-    }));
+    return Array.from({ length: SHOOTING_COUNT }, () => {
+      const bucket = Math.random();
+      let angle: number;
+      let top: number;
+      let left: number;
+      if (bucket < 0.5) {
+        // top-left → bottom-right
+        angle = rand(14, 32);
+        top = rand(-8, 55);
+        left = rand(-15, 55);
+      } else if (bucket < 0.88) {
+        // top-right → bottom-left (mirrored)
+        angle = rand(148, 166);
+        top = rand(-8, 55);
+        left = rand(45, 115);
+      } else {
+        // steep meteor falling from upper edge
+        angle = rand(58, 78) * (Math.random() < 0.5 ? 1 : -1) + (Math.random() < 0.5 ? 0 : 180);
+        top = rand(-10, 12);
+        left = rand(10, 90);
+      }
+      return {
+        top,
+        left,
+        angle,
+        length: rand(120, 320),
+        thickness: rand(1.1, 2.2),
+        delay: rand(0, 24),
+        cycle: rand(6, 18),
+      };
+    });
   }, []);
 
   return (
