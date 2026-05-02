@@ -121,7 +121,10 @@ export function createHuskyMultiplayerServer({
   return { app, httpServer, io, registry };
 }
 
-export async function startServer({ host = '127.0.0.1', port = Number(process.env.PORT ?? 8787) }: ServerOptions = {}) {
+export async function startServer({
+  host = process.env.HOST ?? '0.0.0.0',
+  port = Number(process.env.PORT ?? 8787),
+}: ServerOptions = {}) {
   const server = createHuskyMultiplayerServer();
   await new Promise<void>((resolve) => {
     server.httpServer.listen(port, host, resolve);
