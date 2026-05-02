@@ -29,7 +29,7 @@ afterEach(() => {
 });
 
 describe('LessonProvider', () => {
-  it('auto-plays the current NPC line once with immediate browser-preferred speech', async () => {
+  it('auto-plays the current NPC line every time it is requested', async () => {
     let store: LessonStore | null = null;
     const speechOutput = makeSpeechOutput();
 
@@ -49,14 +49,14 @@ describe('LessonProvider', () => {
       await store?.autoPlayLastNpcLine({ immediate: true });
     });
 
-    expect(speechOutput.speak).toHaveBeenCalledTimes(1);
+    expect(speechOutput.speak).toHaveBeenCalledTimes(2);
     expect(speechOutput.speak).toHaveBeenCalledWith(airportFranceScenario.turns[0].npcLine, {
       lang: 'fr-FR',
       preferBrowser: true,
     });
   });
 
-  it('auto-plays an arbitrary transit NPC line once with immediate browser-preferred speech', async () => {
+  it('auto-plays an arbitrary transit NPC line every time it is requested', async () => {
     let store: LessonStore | null = null;
     const speechOutput = makeSpeechOutput();
     const transitLine = TRANSIT_DIALOGUES.taxi.opening;
@@ -77,7 +77,7 @@ describe('LessonProvider', () => {
       await store?.autoPlayNpcLine(transitLine, { immediate: true });
     });
 
-    expect(speechOutput.speak).toHaveBeenCalledTimes(1);
+    expect(speechOutput.speak).toHaveBeenCalledTimes(2);
     expect(speechOutput.speak).toHaveBeenCalledWith(transitLine, {
       lang: 'fr-FR',
       preferBrowser: true,

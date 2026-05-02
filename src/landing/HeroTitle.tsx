@@ -9,7 +9,7 @@ export function HeroTitle({ active, onExplore }: Props) {
       id="hero-section"
       className={`hero-section ${active ? '' : 'is-hidden'} fixed inset-x-0 top-24 sm:top-28 z-20 flex flex-col items-center text-center px-6 pointer-events-none`}
     >
-      <div className="eyebrow mb-5 pointer-events-auto">
+      <div className={`eyebrow mb-5 ${active ? 'pointer-events-auto' : ''}`}>
         Live AI travel companion · OpenAI Realtime
       </div>
       <h1 className="title-pro text-[44px] sm:text-[68px] md:text-[80px]">
@@ -24,7 +24,7 @@ export function HeroTitle({ active, onExplore }: Props) {
       <button
         type="button"
         onClick={onExplore}
-        className="cta-pro pointer-events-auto mt-8 flex items-center gap-2.5 rounded-full px-8 py-3.5 font-display text-[15px] font-semibold"
+        className={`cta-pro ${active ? 'pointer-events-auto' : ''} mt-8 flex items-center gap-2.5 rounded-full px-8 py-3.5 font-display text-[15px] font-semibold`}
       >
         Explore the world
         <svg
