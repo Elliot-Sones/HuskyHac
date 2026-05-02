@@ -93,17 +93,10 @@ function PlayWorldInner({
         onNearNpcChange={setIsNearNpc}
         onNearTransitChange={setNearTransit}
         onInteract={() => {
-          void lesson.autoPlayLastNpcLine({ immediate: true });
           setActiveTransit(null);
           setMode('conversation');
         }}
-        onTransitInteract={(target) => {
-          const dialogue = getTransitDialogue(target.id);
-          if (dialogue) {
-            void lesson.autoPlayNpcLine(dialogue.opening, { immediate: true });
-          }
-          setActiveTransit(target);
-        }}
+        onTransitInteract={(target) => setActiveTransit(target)}
         conversationFocus={activeTransitFocus}
         playerProfile={playerProfile}
       />

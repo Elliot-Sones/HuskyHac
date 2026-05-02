@@ -88,7 +88,6 @@ export function LessonProvider({
   const [state, dispatch] = useReducer(lessonReducer, scenario, createInitialState);
   const currentTurn = state.scenario.turns[state.turnIndex] ?? state.scenario.turns[0];
   const stateRef = useRef(state);
-  const autoPlayedLineIdsRef = useRef(new Set<string>());
   const resolvedServices = useMemo(
     () => ({
       brain: services?.brain ?? createDefaultNpcBrain(),
@@ -226,11 +225,6 @@ export function LessonProvider({
 
   const autoPlayNpcLine = useMemo(
     () => async (line: ScenarioTranscriptLine, options: ReplayNpcLineOptions = {}) => {
-      if (autoPlayedLineIdsRef.current.has(line.id)) {
-        return;
-      }
-
-      autoPlayedLineIdsRef.current.add(line.id);
       await speakNpcLine(line, options);
     },
     [speakNpcLine],
@@ -264,10 +258,7 @@ export function LessonProvider({
         void recordSpeech();
       },
       setStatus: (status) => dispatch({ type: 'set-status', status }),
-      reset: () => {
-        autoPlayedLineIdsRef.current.clear();
-        dispatch({ type: 'reset' });
-      },
+      reset: () => dispatch({ type: 'reset' }),
     }),
     [
       autoPlayLastNpcLine,

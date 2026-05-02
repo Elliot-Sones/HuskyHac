@@ -1,6 +1,7 @@
 import type { FormEvent } from 'react';
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import type { ResponseOption } from '@/shared/contracts';
+import { useLessonStore } from '@/state/lessonStore';
 import { ResponseOptions } from '@/ui/ResponseOptions';
 import { TranslationTooltip } from '@/ui/TranslationTooltip';
 import type { TransitDialogue } from '@/world/transitDialogues';
@@ -11,6 +12,8 @@ interface TransitConversationPanelProps {
 }
 
 export function TransitConversationPanel({ dialogue, onClose }: TransitConversationPanelProps) {
+  const lesson = useLessonStore();
+  const playedOpeningIdRef = useRef<string | null>(null);
   const recommended = useMemo(
     () => dialogue.responses.find((response) => response.recommended) ?? dialogue.responses[0],
     [dialogue.responses],
@@ -18,6 +21,18 @@ export function TransitConversationPanel({ dialogue, onClose }: TransitConversat
   const [selected, setSelected] = useState<ResponseOption>(recommended);
   const [draft, setDraft] = useState(recommended.french);
   const [practiced, setPracticed] = useState(false);
+
+  useEffect(() => {
+    if (
+      playedOpeningIdRef.current === dialogue.opening.id ||
+      !lesson.speechOutputSupported
+    ) {
+      return;
+    }
+
+    playedOpeningIdRef.current = dialogue.opening.id;
+    void lesson.autoPlayNpcLine(dialogue.opening, { immediate: true });
+  }, [dialogue.opening, lesson.autoPlayNpcLine, lesson.speechOutputSupported]);
 
   function chooseResponse(response: ResponseOption) {
     setSelected(response);

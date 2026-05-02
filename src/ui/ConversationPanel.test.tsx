@@ -40,6 +40,21 @@ describe('ConversationPanel', () => {
     expect(autoPlayLastNpcLine).toHaveBeenCalledWith({ immediate: true });
     expect(autoPlayLastNpcLine).toHaveBeenCalledTimes(1);
   });
+
+  it('plays the opening NPC line again after the panel closes and reopens', async () => {
+    const autoPlayLastNpcLine = vi.fn(async () => {});
+    mocks.useLessonStore.mockReturnValue(makeLessonStore({ autoPlayLastNpcLine }));
+
+    await renderConversationPanel();
+    act(() => root?.unmount());
+    root = null;
+    container?.remove();
+    container = null;
+
+    await renderConversationPanel();
+
+    expect(autoPlayLastNpcLine).toHaveBeenCalledTimes(2);
+  });
 });
 
 async function renderConversationPanel() {
