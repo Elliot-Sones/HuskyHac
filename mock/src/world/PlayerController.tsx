@@ -7,7 +7,7 @@ import type { Mode, ProximityTarget, Scene } from "../store/gameStore";
 import { Character } from "./Character";
 
 const INFO_TARGET = new THREE.Vector3(5.95, 0, -3.65);
-const TAXI_TARGET = new THREE.Vector3(-2, 0, 12);
+const TAXI_TARGET = new THREE.Vector3(10, 0, 3);
 const INTERACT_RADIUS = 3.4;
 const WALK_BOUNDS = {
   minX: -13.5,
