@@ -3,6 +3,7 @@ dist
 dist-server
 dist-ssr
 .vite
+.vercel
 test-results
 *.tsbuildinfo
 vite.config.js

@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import Globe from 'react-globe.gl';
 import * as THREE from 'three';
-import { COUNTRIES_GEOJSON_URL, SUPPORTED, TEASERS } from './countries';
+import { COUNTRIES_GEOJSON_URL, flagFromIsoA2, SUPPORTED, TEASERS } from './countries';
 
 type Feature = {
   type: 'Feature';
@@ -16,7 +16,7 @@ const LAND_DARK = '#2c5e44';
 const LAND_SUPPORTED = '#86b89c';
 const LAND_TEASER = '#6a9d80';
 const LAND_HOVER = '#7fb594';
-const LAND_SELECT = '#d4a64a';
+const LAND_SELECT = '#facc15';
 
 export type GlobePin = { lat: number; lng: number; flag: string };
 
@@ -24,10 +24,9 @@ type Props = {
   selected: string | null;
   pin: GlobePin | null;
   onPickCountry: (name: string, feature: Feature) => void;
-  onUnknownCountry: (name: string) => void;
 };
 
-export function GlobeCanvas({ selected, pin, onPickCountry, onUnknownCountry }: Props) {
+export function GlobeCanvas({ selected, pin, onPickCountry }: Props) {
   const globeRef = useRef<any>(null);
   const hostRef = useRef<HTMLDivElement>(null);
   const [features, setFeatures] = useState<Feature[]>([]);
@@ -121,19 +120,17 @@ export function GlobeCanvas({ selected, pin, onPickCountry, onUnknownCountry }: 
       const name = d.properties.ADMIN;
       const supported = SUPPORTED[name];
       const teaser = TEASERS[name];
-      if (supported) {
-        return `<div style="background:rgba(8,13,28,.94);padding:8px 12px;border-radius:10px;border:1px solid rgba(255,255,255,.08);font-family:Inter,sans-serif;color:#e7ecf5;letter-spacing:0;">
-          <div style="font-weight:700;font-size:13px;display:flex;align-items:center;gap:8px;">${supported.flag} ${name}</div>
-          <div style="font-size:11px;opacity:.65;margin-top:2px;letter-spacing:0">Click to start your ${supported.language} trip</div>
-        </div>`;
-      }
-      if (teaser) {
-        return `<div style="background:rgba(8,13,28,.94);padding:8px 12px;border-radius:10px;border:1px solid rgba(255,255,255,.08);font-family:Inter,sans-serif;color:#e7ecf5;letter-spacing:0;">
-          <div style="font-weight:700;font-size:13px;display:flex;align-items:center;gap:8px;">${teaser.flag} ${name}</div>
-          <div style="font-size:11px;opacity:.6;margin-top:2px">${teaser.language} · in production</div>
-        </div>`;
-      }
-      return `<div style="background:rgba(8,13,28,.94);padding:6px 10px;border-radius:9px;border:1px solid rgba(255,255,255,.06);font-family:Inter,sans-serif;color:#e7ecf5;font-size:12px;">${name}</div>`;
+      const iso = (d.properties.ISO_A2 as string | undefined) ?? null;
+      const flag = supported?.flag ?? teaser?.flag ?? flagFromIsoA2(iso);
+      const sub = supported
+        ? `Click to start your ${supported.language} trip`
+        : teaser
+          ? `${teaser.language} · click to explore`
+          : 'Click to explore this route';
+      return `<div style="background:rgba(8,13,28,.94);padding:8px 12px;border-radius:10px;border:1px solid rgba(255,255,255,.08);font-family:Inter,sans-serif;color:#e7ecf5;letter-spacing:0;">
+        <div style="font-weight:700;font-size:13px;display:flex;align-items:center;gap:8px;">${flag} ${name}</div>
+        <div style="font-size:11px;opacity:.65;margin-top:2px;letter-spacing:0">${sub}</div>
+      </div>`;
     },
     [],
   );
@@ -176,8 +173,7 @@ export function GlobeCanvas({ selected, pin, onPickCountry, onUnknownCountry }: 
         onPolygonClick={(p: any) => {
           if (!p) return;
           const name = p.properties.ADMIN as string;
-          if (SUPPORTED[name] || TEASERS[name]) onPickCountry(name, p);
-          else onUnknownCountry(name);
+          onPickCountry(name, p);
         }}
         htmlElementsData={pin ? [pin] : []}
         htmlElement={((d: any) => {

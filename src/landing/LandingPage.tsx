@@ -1,19 +1,17 @@
-import { useEffect, useRef, useState } from 'react';
+import { useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { CountryChip } from './CountryChip';
 import { featureCentroid, GlobeCanvas, type GlobePin } from './GlobeCanvas';
 import { HeroTitle } from './HeroTitle';
 import { StarField } from './StarField';
 import { StartCTA } from './StartCTA';
-import { Toast } from './Toast';
 import { TopNav } from './TopNav';
-import { SUPPORTED, TEASERS } from './countries';
+import { countrySlug, flagFromIsoA2, SUPPORTED, TEASERS } from './countries';
 
 type Selection = {
   name: string;
   flag: string;
   meta: string;
-  isSupported: boolean;
 };
 
 export function LandingPage() {
@@ -21,29 +19,25 @@ export function LandingPage() {
   const [introMode, setIntroMode] = useState(true);
   const [selection, setSelection] = useState<Selection | null>(null);
   const [pin, setPin] = useState<GlobePin | null>(null);
-  const [toast, setToast] = useState<string | null>(null);
   const [boarding, setBoarding] = useState<'idle' | 'flash' | 'fade'>('idle');
-  const toastTimer = useRef<number | null>(null);
   const bodyRef = useRef<HTMLDivElement>(null);
-
-  function flashToast(message: string) {
-    setToast(message);
-    if (toastTimer.current !== null) window.clearTimeout(toastTimer.current);
-    toastTimer.current = window.setTimeout(() => setToast(null), 2400);
-  }
 
   function handlePick(name: string, feature: any) {
     const supported = SUPPORTED[name];
     const teaser = TEASERS[name];
-    const flag = supported?.flag ?? teaser?.flag ?? '🏳️';
+    const iso = (feature?.properties?.ISO_A2 as string | undefined) ?? null;
+    const flag = supported?.flag ?? teaser?.flag ?? flagFromIsoA2(iso);
     const [lng, lat] = supported ? supported.centroid : featureCentroid(feature);
     setIntroMode(false);
     setPin({ lat, lng, flag });
     setSelection({
       name,
       flag,
-      meta: supported ? supported.subtitle : `${teaser!.language} · in production`,
-      isSupported: !!supported,
+      meta: supported
+        ? supported.subtitle
+        : teaser
+          ? `${teaser.language} · explore route`
+          : 'Explore route',
     });
   }
 
@@ -53,29 +47,17 @@ export function LandingPage() {
   }
 
   function handleStart() {
-    if (!selection?.isSupported) return;
-    const slug = SUPPORTED[selection.name].slug;
+    if (!selection) return;
+    const slug = SUPPORTED[selection.name]?.slug ?? countrySlug(selection.name);
     setBoarding('flash');
     window.setTimeout(() => setBoarding('fade'), 700);
     window.setTimeout(() => navigate(`/play?country=${slug}`), 1450);
   }
 
-  useEffect(() => {
-    return () => {
-      if (toastTimer.current !== null) window.clearTimeout(toastTimer.current);
-    };
-  }, []);
-
-  const ctaLabel = selection
-    ? selection.isSupported
-      ? 'Start simulating your experience'
-      : `${TEASERS[selection.name].language} — coming soon`
-    : 'Start simulating your experience';
+  const ctaLabel = 'Start simulating your experience';
 
   const ctaSubline = selection
-    ? selection.isSupported
-      ? `Arriving at ${SUPPORTED[selection.name].place}`
-      : `${selection.name} routes are in production`
+    ? `Arriving at ${SUPPORTED[selection.name]?.place ?? selection.name}`
     : '';
 
   return (
@@ -91,7 +73,6 @@ export function LandingPage() {
         selected={selection?.name ?? null}
         pin={pin}
         onPickCountry={handlePick}
-        onUnknownCountry={(name) => flashToast(`${name} isn't on the language map yet.`)}
       />
       <div className="grain" />
       <div className="vignette" />
@@ -106,8 +87,6 @@ export function LandingPage() {
         meta={selection?.meta ?? 'French · A1 → B2 routes'}
         onClear={handleClear}
       />
-
-      <Toast visible={!!toast} message={toast ?? ''} />
 
       <div className="hint fixed bottom-7 left-8 sm:left-12 z-20 text-[11px] text-slate-500 hidden sm:flex items-center gap-2 font-mono">
         <span>drag</span>
@@ -125,7 +104,7 @@ export function LandingPage() {
         flag={selection?.flag ?? '🇫🇷'}
         label={ctaLabel}
         subline={ctaSubline}
-        disabled={!selection?.isSupported}
+        disabled={!selection}
         onClick={handleStart}
       />
     </div>

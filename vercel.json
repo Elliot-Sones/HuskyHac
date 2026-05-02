@@ -1,0 +1,8 @@
+{
+  "rewrites": [
+    { "source": "/play", "destination": "/index.html" },
+    { "source": "/how-it-works", "destination": "/index.html" },
+    { "source": "/languages", "destination": "/index.html" },
+    { "source": "/research", "destination": "/index.html" }
+  ]
+}

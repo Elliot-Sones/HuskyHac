@@ -93,6 +93,7 @@ function PlayWorldInner({
         onNearNpcChange={setIsNearNpc}
         onNearTransitChange={setNearTransit}
         onInteract={() => {
+          void lesson.autoPlayLastNpcLine({ immediate: true });
           setActiveTransit(null);
           setMode('conversation');
         }}

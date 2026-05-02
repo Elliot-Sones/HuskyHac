@@ -36,8 +36,8 @@ export function ConversationPanel() {
     }
 
     openingLineRequestedRef.current = true;
-    void lesson.replayLastNpcLine();
-  }, [lesson.lastNpcLine, lesson.replayLastNpcLine, lesson.speechOutputSupported]);
+    void lesson.autoPlayLastNpcLine({ immediate: true });
+  }, [lesson.autoPlayLastNpcLine, lesson.lastNpcLine, lesson.speechOutputSupported]);
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();

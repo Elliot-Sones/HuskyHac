@@ -32,12 +32,13 @@ afterEach(() => {
 
 describe('ConversationPanel', () => {
   it('automatically plays the opening NPC line when the panel opens', async () => {
-    const replayLastNpcLine = vi.fn(async () => {});
-    mocks.useLessonStore.mockReturnValue(makeLessonStore({ replayLastNpcLine }));
+    const autoPlayLastNpcLine = vi.fn(async () => {});
+    mocks.useLessonStore.mockReturnValue(makeLessonStore({ autoPlayLastNpcLine }));
 
     await renderConversationPanel();
 
-    expect(replayLastNpcLine).toHaveBeenCalledTimes(1);
+    expect(autoPlayLastNpcLine).toHaveBeenCalledWith({ immediate: true });
+    expect(autoPlayLastNpcLine).toHaveBeenCalledTimes(1);
   });
 });
 
@@ -54,7 +55,7 @@ async function renderConversationPanel() {
 function makeLessonStore(overrides: Partial<LessonStore> = {}): LessonStore {
   const currentTurn = airportFranceScenario.turns[0];
 
-  return {
+  const store: LessonStore = {
     scenario: airportFranceScenario,
     turnIndex: 0,
     transcript: [currentTurn.npcLine],
@@ -74,9 +75,11 @@ function makeLessonStore(overrides: Partial<LessonStore> = {}): LessonStore {
     submitFreeform: vi.fn(),
     recordSpeech: vi.fn(),
     replayLastNpcLine: vi.fn(),
+    autoPlayLastNpcLine: vi.fn(),
     toggleListening: vi.fn(),
     setStatus: vi.fn(),
     reset: vi.fn(),
-    ...overrides,
   };
+
+  return Object.assign(store, overrides);
 }

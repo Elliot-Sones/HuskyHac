@@ -36,8 +36,13 @@ export interface NpcBrain {
   generateReply(request: NpcBrainRequest): Promise<NpcBrainReply>;
 }
 
+export interface SpeechOutputOptions {
+  lang?: string;
+  preferBrowser?: boolean;
+}
+
 export interface SpeechOutput {
-  speak(line: TranscriptLine, options?: { lang?: string }): Promise<void>;
+  speak(line: TranscriptLine, options?: SpeechOutputOptions): Promise<void>;
   cancel(): void;
   isSupported(): boolean;
 }

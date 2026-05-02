@@ -29,6 +29,10 @@ import type {
 import { airportFranceScenario } from '@/scenarios/airportFrance';
 import { matchResponseVariant } from '@/scenarios/responseMatching';
 
+interface ReplayNpcLineOptions {
+  immediate?: boolean;
+}
+
 type LessonAction =
   | { type: 'select-response'; response: ResponseOption }
   | { type: 'append-player-line'; line: ScenarioTranscriptLine }
@@ -60,7 +64,8 @@ export interface LessonStore extends LessonState {
   selectResponse: (response: ResponseOption) => void;
   submitFreeform: (text: string, source?: LearnerInputSource) => Promise<void>;
   recordSpeech: () => Promise<SpeechTranscript | null>;
-  replayLastNpcLine: () => Promise<void>;
+  replayLastNpcLine: (options?: ReplayNpcLineOptions) => Promise<void>;
+  autoPlayLastNpcLine: (options?: ReplayNpcLineOptions) => Promise<void>;
   toggleListening: () => void;
   setStatus: (status: ConversationStatus) => void;
   reset: () => void;
@@ -82,6 +87,7 @@ export function LessonProvider({
   const [state, dispatch] = useReducer(lessonReducer, scenario, createInitialState);
   const currentTurn = state.scenario.turns[state.turnIndex] ?? state.scenario.turns[0];
   const stateRef = useRef(state);
+  const autoPlayedLineIdsRef = useRef(new Set<string>());
   const resolvedServices = useMemo(
     () => ({
       brain: services?.brain ?? createDefaultNpcBrain(),
@@ -183,7 +189,7 @@ export function LessonProvider({
   );
 
   const replayLastNpcLine = useMemo(
-    () => async () => {
+    () => async (options: ReplayNpcLineOptions = {}) => {
       const line = stateRef.current.lastNpcLine;
 
       if (!line) {
@@ -192,7 +198,10 @@ export function LessonProvider({
 
       dispatch({ type: 'set-status', status: 'speaking' });
       try {
-        await resolvedServices.speechOutput.speak(line, { lang: 'fr-FR' });
+        await resolvedServices.speechOutput.speak(line, {
+          lang: 'fr-FR',
+          preferBrowser: options.immediate,
+        });
         dispatch({
           type: 'set-status',
           status: stateRef.current.status === 'complete' ? 'complete' : 'idle',
@@ -207,6 +216,20 @@ export function LessonProvider({
     [resolvedServices.speechOutput],
   );
 
+  const autoPlayLastNpcLine = useMemo(
+    () => async (options: ReplayNpcLineOptions = {}) => {
+      const line = stateRef.current.lastNpcLine;
+
+      if (!line || autoPlayedLineIdsRef.current.has(line.id)) {
+        return;
+      }
+
+      autoPlayedLineIdsRef.current.add(line.id);
+      await replayLastNpcLine(options);
+    },
+    [replayLastNpcLine],
+  );
+
   const store = useMemo<LessonStore>(
     () => ({
       ...state,
@@ -216,13 +239,17 @@ export function LessonProvider({
       submitFreeform: submitLearnerText,
       recordSpeech,
       replayLastNpcLine,
+      autoPlayLastNpcLine,
       toggleListening: () => {
         void recordSpeech();
       },
       setStatus: (status) => dispatch({ type: 'set-status', status }),
-      reset: () => dispatch({ type: 'reset' }),
+      reset: () => {
+        autoPlayedLineIdsRef.current.clear();
+        dispatch({ type: 'reset' });
+      },
     }),
-    [currentTurn, recordSpeech, replayLastNpcLine, state, submitLearnerText],
+    [autoPlayLastNpcLine, currentTurn, recordSpeech, replayLastNpcLine, state, submitLearnerText],
   );
 
   return <LessonStoreContext.Provider value={store}>{children}</LessonStoreContext.Provider>;

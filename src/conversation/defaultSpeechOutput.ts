@@ -13,6 +13,15 @@ export function createDefaultSpeechOutput(): SpeechOutput {
       browser.cancel();
     },
     async speak(line, options) {
+      if (options?.preferBrowser && browser.isSupported()) {
+        try {
+          await browser.speak(line, options);
+          return;
+        } catch (error) {
+          console.warn('Browser speech unavailable; using OpenAI speech synthesis.', error);
+        }
+      }
+
       try {
         await openai.speak(line, options);
       } catch (error) {

@@ -43,3 +43,21 @@ export const TEASERS: Record<string, TeaserCountry> = {
 
 export const COUNTRIES_GEOJSON_URL =
   'https://raw.githubusercontent.com/vasturiano/globe.gl/master/example/datasets/ne_110m_admin_0_countries.geojson';
+
+export function flagFromIsoA2(iso: string | undefined | null): string {
+  if (!iso || iso.length !== 2 || iso === '-9' || iso === '-99') return '🏳️';
+  const upper = iso.toUpperCase();
+  if (!/^[A-Z]{2}$/.test(upper)) return '🏳️';
+  const A = 'A'.charCodeAt(0);
+  const base = 0x1f1e6;
+  return String.fromCodePoint(base + upper.charCodeAt(0) - A, base + upper.charCodeAt(1) - A);
+}
+
+export function countrySlug(name: string): string {
+  return `airport-${name
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[̀-ͯ]/g, '')
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '')}`;
+}
