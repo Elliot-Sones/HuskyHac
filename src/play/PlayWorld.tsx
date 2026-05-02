@@ -9,6 +9,7 @@ import { MultiplayerLobby } from '@/multiplayer/MultiplayerLobby';
 import { MultiplayerProvider, useMultiplayer } from '@/multiplayer/MultiplayerProvider';
 import { LessonProvider, useLessonStore } from '@/state/lessonStore';
 import { ConversationPanel } from '@/ui/ConversationPanel';
+import { GoalPill } from '@/ui/GoalPill';
 import { TransitConversationPanel } from '@/ui/TransitConversationPanel';
 import { WorldHud } from '@/ui/WorldHud';
 import { WorldCanvas } from '@/world/WorldCanvas';
@@ -132,29 +133,19 @@ function PlayWorldInner({
 
       {mode === 'conversation' && (
         <div className="pointer-events-none absolute inset-0 z-20">
-          <div className="absolute inset-0 bg-slate-950/20 backdrop-blur-[1.5px]" />
-          <div className="absolute left-4 right-4 top-4 z-20 flex items-start justify-between gap-4">
-            <div className="rounded-3xl border border-white/10 bg-slate-950/75 px-4 py-3 shadow-2xl shadow-black/30 backdrop-blur-2xl">
-              <div className="text-[11px] font-bold uppercase tracking-[0.22em] text-slate-400">
-                Live roleplay
-              </div>
-              <div className="mt-1 text-[15px] font-black text-white">
-                {lesson.scenario.npc.name} · {lesson.scenario.npc.role}
-              </div>
-            </div>
+          <div className="absolute inset-0 bg-slate-950/15" />
+          <div className="pointer-events-auto absolute left-4 right-4 top-4 z-20 flex items-start justify-between gap-4">
+            <GoalPill goal={lesson.scenario.goal} progress={lesson.goalProgress} />
             <button
               type="button"
               onClick={() => setMode('world')}
-              className="pointer-events-auto rounded-2xl border border-white/10 bg-slate-950/70 px-4 py-3 text-[12px] font-bold text-slate-100 shadow-2xl shadow-black/30 backdrop-blur-2xl transition hover:bg-slate-900"
+              className="rounded-2xl border border-white/10 bg-slate-950/70 px-4 py-3 text-[12px] font-bold text-slate-100 shadow-2xl shadow-black/30 backdrop-blur-2xl transition hover:bg-slate-900"
             >
               ESC Leave
             </button>
           </div>
 
-          <div
-            data-testid="conversation-panel"
-            className="absolute inset-x-0 bottom-0 z-30 p-4 pointer-events-auto"
-          >
+          <div className="pointer-events-none absolute inset-x-3 bottom-3 z-30">
             <ConversationPanel />
           </div>
         </div>

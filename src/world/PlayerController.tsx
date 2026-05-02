@@ -75,7 +75,7 @@ export function PlayerController({
     onNearNpcChange(false);
     onNearTransitChange(null);
     snapshotPublisher.reset();
-  }, [layout.id, layout.playerStartRotation, onNearNpcChange, onNearTransitChange]);
+  }, [layout.id, layout.playerStartRotation, onNearNpcChange, onNearTransitChange, snapshotPublisher]);
 
   useEffect(() => {
     snapshotPublisher.reset();

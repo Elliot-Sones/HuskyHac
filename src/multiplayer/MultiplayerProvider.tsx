@@ -92,7 +92,7 @@ export function MultiplayerProvider({ children }: { children: ReactNode }) {
     ];
 
     return transport;
-  }, [disabled, remoteSnapshots]);
+  }, [disabled, multiplayerUrl, remoteSnapshots]);
 
   const buildProfileInput = useCallback((): PlayerProfileInput => {
     return {
