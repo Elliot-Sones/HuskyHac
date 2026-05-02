@@ -17,6 +17,7 @@ type Selection = {
 
 export function LandingPage() {
   const navigate = useNavigate();
+  const [introMode, setIntroMode] = useState(true);
   const [selection, setSelection] = useState<Selection | null>(null);
   const [pin, setPin] = useState<GlobePin | null>(null);
   const [toast, setToast] = useState<string | null>(null);
@@ -35,6 +36,7 @@ export function LandingPage() {
     const teaser = TEASERS[name];
     const flag = supported?.flag ?? teaser?.flag ?? '🏳️';
     const [lng, lat] = supported ? supported.centroid : featureCentroid(feature);
+    setIntroMode(false);
     setPin({ lat, lng, flag });
     setSelection({
       name,
@@ -78,18 +80,22 @@ export function LandingPage() {
   return (
     <div
       ref={bodyRef}
-      className={`no-select boarding ${boarding === 'flash' ? 'flash' : ''} ${boarding === 'fade' ? 'fade' : ''}`}
+      className={`landing-shell no-select boarding ${introMode ? 'intro-mode' : 'active-mode'} ${
+        boarding === 'flash' ? 'flash' : ''
+      } ${boarding === 'fade' ? 'fade' : ''}`}
     >
+      <div className="stars" />
       <GlobeCanvas
         selected={selection?.name ?? null}
         pin={pin}
         onPickCountry={handlePick}
         onUnknownCountry={(name) => flashToast(`${name} isn't on the language map yet.`)}
       />
+      <div className="grain" />
       <div className="vignette" />
 
       <TopNav />
-      <HeroTitle />
+      <HeroTitle active={introMode} onExplore={() => setIntroMode(false)} />
 
       <CountryChip
         visible={!!selection}

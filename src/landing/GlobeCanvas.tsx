@@ -9,14 +9,14 @@ type Feature = {
   geometry: any;
 };
 
-const OCEAN = '#2a82c5';
-const OCEAN_GLOW = '#3a99dc';
-const LAND = '#5fa67c';
-const LAND_DARK = '#2f6a4d';
-const LAND_SUPPORTED = '#7fb89a';
-const LAND_TEASER = '#6ca685';
-const LAND_HOVER = '#88c79e';
-const LAND_SELECT = '#e0a93b';
+const OCEAN = '#0e2c4f';
+const OCEAN_GLOW = '#0a2a55';
+const LAND = '#5b9c79';
+const LAND_DARK = '#2c5e44';
+const LAND_SUPPORTED = '#86b89c';
+const LAND_TEASER = '#6a9d80';
+const LAND_HOVER = '#7fb594';
+const LAND_SELECT = '#d4a64a';
 
 export type GlobePin = { lat: number; lng: number; flag: string };
 
@@ -113,18 +113,18 @@ export function GlobeCanvas({ selected, pin, onPickCountry, onUnknownCountry }: 
       const supported = SUPPORTED[name];
       const teaser = TEASERS[name];
       if (supported) {
-        return `<div style="background:rgba(255,255,255,.94);padding:8px 12px;border-radius:10px;border:1px solid rgba(15,23,42,.08);font-family:Inter,sans-serif;color:#0b1228;letter-spacing:-.005em;">
+        return `<div style="background:rgba(8,13,28,.94);padding:8px 12px;border-radius:10px;border:1px solid rgba(255,255,255,.08);font-family:Inter,sans-serif;color:#e7ecf5;letter-spacing:0;">
           <div style="font-weight:700;font-size:13px;display:flex;align-items:center;gap:8px;">${supported.flag} ${name}</div>
-          <div style="font-size:11px;opacity:.65;margin-top:2px;letter-spacing:.02em">Click to start your ${supported.language} trip</div>
+          <div style="font-size:11px;opacity:.65;margin-top:2px;letter-spacing:0">Click to start your ${supported.language} trip</div>
         </div>`;
       }
       if (teaser) {
-        return `<div style="background:rgba(255,255,255,.94);padding:8px 12px;border-radius:10px;border:1px solid rgba(15,23,42,.08);font-family:Inter,sans-serif;color:#0b1228;letter-spacing:-.005em;">
+        return `<div style="background:rgba(8,13,28,.94);padding:8px 12px;border-radius:10px;border:1px solid rgba(255,255,255,.08);font-family:Inter,sans-serif;color:#e7ecf5;letter-spacing:0;">
           <div style="font-weight:700;font-size:13px;display:flex;align-items:center;gap:8px;">${teaser.flag} ${name}</div>
           <div style="font-size:11px;opacity:.6;margin-top:2px">${teaser.language} · in production</div>
         </div>`;
       }
-      return `<div style="background:rgba(255,255,255,.94);padding:6px 10px;border-radius:9px;border:1px solid rgba(15,23,42,.06);font-family:Inter,sans-serif;color:#0b1228;font-size:12px;">${name}</div>`;
+      return `<div style="background:rgba(8,13,28,.94);padding:6px 10px;border-radius:9px;border:1px solid rgba(255,255,255,.06);font-family:Inter,sans-serif;color:#e7ecf5;font-size:12px;">${name}</div>`;
     },
     [],
   );
@@ -138,8 +138,8 @@ export function GlobeCanvas({ selected, pin, onPickCountry, onUnknownCountry }: 
         backgroundColor="rgba(0,0,0,0)"
         showGlobe
         showAtmosphere
-        atmosphereColor="#7eb6e8"
-        atmosphereAltitude={0.14}
+        atmosphereColor="#a8c8ff"
+        atmosphereAltitude={0.18}
         polygonsData={features}
         polygonAltitude={(d: any) => {
           const name = d.properties.ADMIN;

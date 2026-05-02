@@ -16,8 +16,8 @@ export const SUPPORTED: Record<string, SupportedCountry> = {
   France: {
     flag: '🇫🇷',
     language: 'French',
-    place: 'Charles de Gaulle Airport, Paris',
-    subtitle: 'French · airport arrival',
+    place: 'Charles de Gaulle, Paris',
+    subtitle: 'French · A1 → B2 routes',
     centroid: [2.3522, 48.8566],
     slug: 'airport-france',
   },

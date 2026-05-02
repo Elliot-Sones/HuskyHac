@@ -24,6 +24,9 @@ export interface WorldCameraRig {
 export interface WorldConversationFocus {
   camera: THREE.Vector3;
   look: THREE.Vector3;
+  avatarPosition?: THREE.Vector3;
+  avatarRotationY?: number;
+  avatarScale?: number;
 }
 
 export interface WorldLayout {

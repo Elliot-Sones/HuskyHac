@@ -19,6 +19,9 @@ interface PlayerControllerProps {
 }
 
 const interactRadius = 3.3;
+const yAxis = new THREE.Vector3(0, 1, 0);
+const defaultAvatarScale = new THREE.Vector3(1, 1, 1);
+const defaultAvatarPosition = new THREE.Vector3(0, 0, 0);
 
 export function PlayerController({
   mode,
@@ -106,6 +109,34 @@ export function PlayerController({
         lookY: conversationLook.y,
         lookZ: conversationLook.z,
       };
+      if (visualRef.current) {
+        if (activeFocus?.avatarPosition) {
+          const localAvatarPosition = activeFocus.avatarPosition
+            .clone()
+            .sub(player.position)
+            .applyAxisAngle(yAxis, -player.rotation.y);
+          const avatarScale = activeFocus.avatarScale ?? 1;
+
+          visualRef.current.position.lerp(localAvatarPosition, 0.18);
+          visualRef.current.rotation.y = THREE.MathUtils.lerp(
+            visualRef.current.rotation.y,
+            (activeFocus.avatarRotationY ?? player.rotation.y) - player.rotation.y,
+            0.18,
+          );
+          visualRef.current.scale.lerp(new THREE.Vector3(avatarScale, avatarScale, avatarScale), 0.18);
+          window.__huskyAvatarDebug = {
+            x: activeFocus.avatarPosition.x,
+            y: activeFocus.avatarPosition.y,
+            z: activeFocus.avatarPosition.z,
+            scale: avatarScale,
+          };
+        } else {
+          visualRef.current.position.lerp(defaultAvatarPosition, 0.18);
+          visualRef.current.rotation.y = THREE.MathUtils.lerp(visualRef.current.rotation.y, 0, 0.18);
+          visualRef.current.scale.lerp(defaultAvatarScale, 0.18);
+          window.__huskyAvatarDebug = undefined;
+        }
+      }
       return;
     }
 
@@ -145,6 +176,9 @@ export function PlayerController({
     player.rotation.y = THREE.MathUtils.lerp(player.rotation.y, targetRotation.current, 0.18);
 
     if (visualRef.current) {
+      visualRef.current.position.lerp(defaultAvatarPosition, 0.24);
+      visualRef.current.rotation.y = THREE.MathUtils.lerp(visualRef.current.rotation.y, 0, 0.24);
+      visualRef.current.scale.lerp(defaultAvatarScale, 0.24);
       visualRef.current.rotation.z = Math.sin(_state.clock.elapsedTime * 8) * (moving ? 0.025 : 0);
     }
 
@@ -209,5 +243,6 @@ declare global {
     __huskyPlayerPosition?: { x: number; y: number; z: number };
     __huskyCollisionDebug?: { blockedX: boolean; blockedZ: boolean; colliderCount: number };
     __huskyCameraDebug?: { x: number; y: number; z: number; lookX: number; lookY: number; lookZ: number };
+    __huskyAvatarDebug?: { x: number; y: number; z: number; scale: number };
   }
 }

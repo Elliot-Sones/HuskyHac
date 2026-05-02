@@ -17,7 +17,7 @@ export function StartCTA({ visible, flag, label, subline, disabled, onClick }: P
         disabled={disabled}
         className="cta-pro font-display font-semibold text-[15px] sm:text-[16px] rounded-full pl-3 pr-6 py-3 flex items-center gap-3"
       >
-        <span className="w-9 h-9 rounded-full bg-white/10 grid place-items-center ring-1 ring-white/15">
+        <span className="w-9 h-9 rounded-full bg-[#0b1228] grid place-items-center ring-1 ring-black/10">
           <span className="text-[18px] leading-none">{flag}</span>
         </span>
         <span>{label}</span>
@@ -35,7 +35,7 @@ export function StartCTA({ visible, flag, label, subline, disabled, onClick }: P
           <path d="M5 12h14M13 5l7 7-7 7" />
         </svg>
       </button>
-      <span className="text-[12px] text-slate-500">{subline}</span>
+      <span className="text-center text-[12px] text-slate-400">{subline}</span>
     </div>
   );
 }
