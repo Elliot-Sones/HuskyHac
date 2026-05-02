@@ -1,5 +1,5 @@
 import type { FormEvent } from 'react';
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { GoalHud } from '@/ui/GoalHud';
 import { MicButton } from '@/ui/MicButton';
 import { ResponseOptions } from '@/ui/ResponseOptions';
@@ -23,7 +23,21 @@ const BUSY_STATUSES = new Set(['recording', 'transcribing', 'thinking', 'speakin
 export function ConversationPanel() {
   const lesson = useLessonStore();
   const [draft, setDraft] = useState('');
+  const openingLineRequestedRef = useRef(false);
   const isBusy = BUSY_STATUSES.has(lesson.status);
+
+  useEffect(() => {
+    if (
+      openingLineRequestedRef.current ||
+      !lesson.lastNpcLine ||
+      !lesson.speechOutputSupported
+    ) {
+      return;
+    }
+
+    openingLineRequestedRef.current = true;
+    void lesson.replayLastNpcLine();
+  }, [lesson.lastNpcLine, lesson.replayLastNpcLine, lesson.speechOutputSupported]);
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();

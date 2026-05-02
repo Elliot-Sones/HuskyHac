@@ -42,11 +42,11 @@ describe('local player profile', () => {
     );
 
     expect(profile).toEqual({
-      displayName: 'A very very very very lon',
+      displayName: 'A very very very very lo',
       color: '#ea580c',
       accessory: 'suitcase',
     });
-    expect(values.get('huskyhac.playerName')).toBe('A very very very very lon');
+    expect(values.get('huskyhac.playerName')).toBe('A very very very very lo');
     expect(values.get('huskyhac.playerColor')).toBe('#ea580c');
     expect(values.get('huskyhac.playerAccessory')).toBe('suitcase');
   });

@@ -33,7 +33,7 @@ function browserStorage(): PlayerProfileStorage | null {
 
 export function sanitizeLocalPlayerProfile(profile: Partial<LocalPlayerProfile>): LocalPlayerProfile {
   const displayName = profile.displayName?.trim().slice(0, 24) || defaultProfile.displayName;
-  const color = avatarColors.some((avatarColor) => avatarColor.value === profile.color)
+  const color = profile.color && avatarColors.some((avatarColor) => avatarColor.value === profile.color)
     ? profile.color
     : defaultProfile.color;
   const accessory = profile.accessory && accessories.includes(profile.accessory)
@@ -49,7 +49,7 @@ export function readLocalPlayerProfile(storage = browserStorage()): LocalPlayerP
   return sanitizeLocalPlayerProfile({
     displayName: storage.getItem('huskyhac.playerName') ?? undefined,
     color: storage.getItem('huskyhac.playerColor') ?? undefined,
-    accessory: storage.getItem('huskyhac.playerAccessory') as PlayerAccessory | null | undefined,
+    accessory: (storage.getItem('huskyhac.playerAccessory') ?? undefined) as PlayerAccessory | undefined,
   });
 }
 

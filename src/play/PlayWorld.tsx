@@ -95,7 +95,6 @@ function PlayWorldInner({
         onInteract={() => {
           setActiveTransit(null);
           setMode('conversation');
-          void lesson.replayLastNpcLine();
         }}
         onTransitInteract={(target) => setActiveTransit(target)}
         conversationFocus={activeTransitFocus}
