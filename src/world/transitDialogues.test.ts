@@ -19,4 +19,13 @@ describe('transit dialogues', () => {
     expect(getTransitDialogue('taxi')?.goal).toMatch(/taxi/i);
     expect(getTransitDialogue('bus')?.goal).toMatch(/bus/i);
   });
+
+  it('offers Eiffel Tower requests from airport transit conversations', () => {
+    expect(getTransitDialogue('taxi')?.responses.some((response) => /tour eiffel/i.test(response.french))).toBe(
+      true,
+    );
+    expect(getTransitDialogue('bus')?.responses.some((response) => /tour eiffel/i.test(response.french))).toBe(
+      true,
+    );
+  });
 });

@@ -10,9 +10,16 @@ import type { TransitDialogue } from '@/world/transitDialogues';
 interface TransitConversationPanelProps {
   dialogue: TransitDialogue;
   onClose: () => void;
+  onTravelDestination?: (destinationId: string) => void;
 }
 
-export function TransitConversationPanel({ dialogue, onClose }: TransitConversationPanelProps) {
+const EIFFEL_TOWER_DESTINATION_ID = 'france-eiffel_tour';
+
+export function TransitConversationPanel({
+  dialogue,
+  onClose,
+  onTravelDestination,
+}: TransitConversationPanelProps) {
   const lesson = useLessonStore();
   const playedOpeningIdRef = useRef<string | null>(null);
   const recommended = useMemo(
@@ -23,6 +30,7 @@ export function TransitConversationPanel({ dialogue, onClose }: TransitConversat
   const [draft, setDraft] = useState(recommended.french);
   const [practiced, setPracticed] = useState(false);
   const [showTyping, setShowTyping] = useState(false);
+  const eiffelTowerRequested = practiced && isEiffelTowerRequest(draft);
 
   useEffect(() => {
     if (
@@ -129,10 +137,21 @@ export function TransitConversationPanel({ dialogue, onClose }: TransitConversat
 
           {practiced && (
             <div className="border-b border-white/[0.06] px-5 py-3">
-              <div className="rounded-2xl border border-emerald-200/20 bg-emerald-300/[0.08] px-3 py-2 text-[12px] leading-relaxed text-emerald-50/85">
-                <span className="text-emerald-200">You practiced:</span>{' '}
-                <span className="font-semibold text-emerald-50">{draft}</span>
-                <span className="ml-2 text-emerald-50/60">{selected.english}</span>
+              <div className="flex flex-col gap-3 rounded-2xl border border-emerald-200/20 bg-emerald-300/[0.08] px-3 py-2 text-[12px] leading-relaxed text-emerald-50/85 sm:flex-row sm:items-center sm:justify-between">
+                <div>
+                  <span className="text-emerald-200">You practiced:</span>{' '}
+                  <span className="font-semibold text-emerald-50">{draft}</span>
+                  <span className="ml-2 text-emerald-50/60">{selected.english}</span>
+                </div>
+                {eiffelTowerRequested && onTravelDestination && (
+                  <button
+                    type="button"
+                    onClick={() => onTravelDestination(EIFFEL_TOWER_DESTINATION_ID)}
+                    className="shrink-0 rounded-xl bg-white px-4 py-2 text-[12px] font-black text-slate-950 shadow-lg shadow-white/10 transition hover:bg-emerald-100"
+                  >
+                    Go to the Eiffel Tower
+                  </button>
+                )}
               </div>
             </div>
           )}
@@ -189,6 +208,10 @@ export function TransitConversationPanel({ dialogue, onClose }: TransitConversat
       </div>
     </div>
   );
+}
+
+function isEiffelTowerRequest(text: string) {
+  return /\b(?:eiffel|tour eiffel)\b/i.test(text.normalize('NFD').replace(/[\u0300-\u036f]/g, ''));
 }
 
 function PracticeButton({ onClick, disabled }: { onClick: () => void; disabled: boolean }) {

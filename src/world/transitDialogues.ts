@@ -46,8 +46,8 @@ export const TRANSIT_DIALOGUES: Record<string, TransitDialogue> = {
       {
         id: 'taxi-central-paris',
         label: 'natural',
-        french: 'Bonjour, je voudrais aller au centre de Paris.',
-        english: 'Hello, I would like to go to central Paris.',
+        french: 'Bonjour, je voudrais aller a la Tour Eiffel.',
+        english: 'Hello, I would like to go to the Eiffel Tower.',
         recommended: true,
       },
       {
@@ -94,8 +94,8 @@ export const TRANSIT_DIALOGUES: Record<string, TransitDialogue> = {
       {
         id: 'bus-central-paris',
         label: 'natural',
-        french: 'Quel bus va au centre de Paris ?',
-        english: 'Which bus goes to central Paris?',
+        french: 'Quel bus va a la Tour Eiffel ?',
+        english: 'Which bus goes to the Eiffel Tower?',
         recommended: true,
       },
       {

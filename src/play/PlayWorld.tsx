@@ -17,12 +17,17 @@ import { getTransitDialogue } from '@/world/transitDialogues';
 import type { WorldTransitTarget } from '@/world/worldLayout';
 
 export function PlayWorld() {
-  const [searchParams] = useSearchParams();
+  const [searchParams, setSearchParams] = useSearchParams();
   const [phase, setPhase] = useState<'entry' | 'arrival' | 'world'>('entry');
   const [playerProfile, setPlayerProfile] = useState<LocalPlayerProfile>(() => readLocalPlayerProfile());
   const destination = resolvePlayDestination(
     searchParams.get('destination') ?? searchParams.get('country'),
   );
+
+  function handleTravelDestination(destinationId: string) {
+    setSearchParams({ destination: destinationId });
+    setPhase('arrival');
+  }
 
   if (phase === 'entry') {
     return (
@@ -43,7 +48,11 @@ export function PlayWorld() {
   return (
     <MultiplayerProvider>
       <LessonProvider key={destination.id} scenario={destination.scenario}>
-        <PlayWorldInner destination={destination} playerProfile={playerProfile} />
+        <PlayWorldInner
+          destination={destination}
+          playerProfile={playerProfile}
+          onTravelDestination={handleTravelDestination}
+        />
       </LessonProvider>
     </MultiplayerProvider>
   );
@@ -52,9 +61,11 @@ export function PlayWorld() {
 function PlayWorldInner({
   destination,
   playerProfile,
+  onTravelDestination,
 }: {
   destination: PlayDestination;
   playerProfile: LocalPlayerProfile;
+  onTravelDestination: (destinationId: string) => void;
 }) {
   const lesson = useLessonStore();
   const multiplayer = useMultiplayer();
@@ -132,6 +143,11 @@ function PlayWorldInner({
           <TransitConversationPanel
             dialogue={activeTransitDialogue}
             onClose={() => setActiveTransit(null)}
+            onTravelDestination={(destinationId) => {
+              setActiveTransit(null);
+              setMode('world');
+              onTravelDestination(destinationId);
+            }}
           />
         </>
       )}

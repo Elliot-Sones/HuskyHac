@@ -368,7 +368,7 @@ function CityBackdrop() {
   );
 }
 
-function Taxi({ position }: { position: [number, number, number] }) {
+function Taxi({ position, talking = false }: { position: [number, number, number]; talking?: boolean }) {
   return (
     <group position={position} rotation={[0, Math.PI / 2, 0]}>
       <mesh castShadow position={[0, 0.45, 0]}>
@@ -377,8 +377,24 @@ function Taxi({ position }: { position: [number, number, number] }) {
       </mesh>
       <mesh castShadow position={[0, 0.92, -0.15]}>
         <boxGeometry args={[1.25, 0.55, 1.3]} />
-        <meshStandardMaterial color="#f6d65b" roughness={0.38} />
+        <meshStandardMaterial
+          color="#f6d65b"
+          roughness={0.38}
+          transparent
+          opacity={0.55}
+        />
       </mesh>
+      <group position={[-0.32, 0.05, 0.4]} scale={0.55}>
+        <Character
+          color="#1e293b"
+          pants="#0b1220"
+          hair="#1f1107"
+          skin="#c9956b"
+          accessory="nametag"
+          idleBob={false}
+          talking={talking}
+        />
+      </group>
       <mesh position={[-0.64, 0.99, -0.15]}>
         <boxGeometry args={[0.035, 0.34, 0.96]} />
         <meshStandardMaterial color={glass} roughness={0.12} transparent opacity={0.5} />

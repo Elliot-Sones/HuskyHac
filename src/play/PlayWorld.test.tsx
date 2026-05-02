@@ -9,6 +9,7 @@ import { FRANCE_MULTIPLAYER_ROOM_CODE } from '@/shared/contracts';
 import { airportFranceScenario } from '@/scenarios/airportFrance';
 import { PlayWorld } from '@/play/PlayWorld';
 import { RemoteSnapshotStore } from '@/multiplayer/remoteSnapshotStore';
+import { AIRPORT_TRANSIT_TARGETS } from '@/world/airportLayout';
 
 const mocks = vi.hoisted(() => ({
   joinRoom: vi.fn(async () => {}),
@@ -109,6 +110,25 @@ describe('PlayWorld multiplayer integration', () => {
     expect(container?.textContent).not.toContain('Airport room');
     expect(container?.textContent).not.toContain('Create room');
   });
+
+  it('moves the player to the Eiffel Tower after the transit travel action', async () => {
+    await renderPlayWorld();
+
+    await click('launch-player');
+    await click('complete-arrival');
+
+    await act(async () => {
+      const worldCanvasProps = getLastWorldCanvasProps();
+      worldCanvasProps.onTransitInteract(AIRPORT_TRANSIT_TARGETS[0]);
+    });
+
+    await clickByAriaLabel('Practice phrase');
+    await clickButton(getButtonByText('Go to the Eiffel Tower'));
+    await click('complete-arrival');
+
+    const latestWorldCanvasProps = getLastWorldCanvasProps();
+    expect(latestWorldCanvasProps.layout.id).toBe('france-eiffel_tour');
+  });
 });
 
 async function renderPlayWorld() {
@@ -129,9 +149,39 @@ async function click(testId: string) {
   const button = container?.querySelector<HTMLButtonElement>(`[data-testid="${testId}"]`);
   expect(button).not.toBeNull();
 
+  await clickButton(button);
+}
+
+async function clickByAriaLabel(label: string) {
+  const button = container?.querySelector<HTMLButtonElement>(`[aria-label="${label}"]`);
+  expect(button).not.toBeNull();
+  await clickButton(button);
+}
+
+async function clickButton(button: HTMLButtonElement | null | undefined) {
   await act(async () => {
     button?.dispatchEvent(new MouseEvent('click', { bubbles: true }));
   });
+}
+
+function getButtonByText(text: string) {
+  return [...(container?.querySelectorAll<HTMLButtonElement>('button') ?? [])].find((button) =>
+    button.textContent?.includes(text),
+  ) ?? null;
+}
+
+interface WorldCanvasTestProps {
+  layout: {
+    id: string;
+  };
+  onTransitInteract: (target: (typeof AIRPORT_TRANSIT_TARGETS)[number]) => void;
+}
+
+function getLastWorldCanvasProps() {
+  const calls = mocks.worldCanvas.mock.calls as unknown as Array<[WorldCanvasTestProps]>;
+  const props = calls.at(-1)?.[0];
+  expect(props).toBeDefined();
+  return props as WorldCanvasTestProps;
 }
 
 function makeLessonStore(): LessonStore {
