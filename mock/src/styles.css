@@ -1,0 +1,40 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+html, body, #root {
+  height: 100%;
+  width: 100%;
+  margin: 0;
+  overflow: hidden;
+  background: #000;
+}
+
+.glass {
+  background: rgba(15, 23, 42, 0.72);
+  backdrop-filter: blur(14px) saturate(1.2);
+  -webkit-backdrop-filter: blur(14px) saturate(1.2);
+}
+.glass-light {
+  background: rgba(255, 255, 255, 0.94);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+}
+
+@keyframes pulse-ring {
+  0% { transform: scale(1); opacity: 0.7; }
+  100% { transform: scale(1.9); opacity: 0; }
+}
+.pulse-ring { animation: pulse-ring 1.6s cubic-bezier(0.4, 0, 0.6, 1) infinite; }
+
+@keyframes pulse-dot { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.15); } }
+.pulse-dot { animation: pulse-dot 1.6s ease-in-out infinite; }
+
+@keyframes listen-blink { 0%, 100% { opacity: 1; } 50% { opacity: 0.35; } }
+.listen-blink { animation: listen-blink 1.2s ease-in-out infinite; }
+
+@keyframes speak-bar {
+  from { transform: scaleY(0.4); }
+  to   { transform: scaleY(1); }
+}
+.speak-bar { animation: speak-bar 0.6s ease-in-out infinite alternate; transform-origin: center bottom; }
