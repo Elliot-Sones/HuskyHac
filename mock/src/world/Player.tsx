@@ -1,48 +1,31 @@
 import { useRef, useEffect, useMemo } from "react";
 import { useFrame, useThree } from "@react-three/fiber";
-import { useGLTF, useAnimations, useKeyboardControls } from "@react-three/drei";
+import { useKeyboardControls } from "@react-three/drei";
 import * as THREE from "three";
 import { useGameStore } from "../store/gameStore";
-
-const PLAYER_GLB = "https://threejs.org/examples/models/gltf/Soldier.glb";
-useGLTF.preload(PLAYER_GLB);
+import { Character } from "./Character";
 
 const NPC_POSITION = new THREE.Vector3(5, 0, -3);
 const INTERACT_RADIUS = 3.5;
 
 export function Player() {
   const groupRef = useRef<THREE.Group>(null!);
-  const { scene, animations } = useGLTF(PLAYER_GLB) as any;
-
-  // Clone the gltf scene so multiple Soldier instances don't share materials
-  const cloned = useMemo(() => {
-    const c = scene.clone(true);
-    c.traverse((o: any) => {
-      if (o.isMesh) {
-        o.castShadow = true;
-        o.receiveShadow = true;
-      }
-    });
-    return c;
-  }, [scene]);
-
-  const { actions } = useAnimations(animations, cloned);
+  const innerRef = useRef<THREE.Group>(null!);
   const [, getKeys] = useKeyboardControls();
 
   const setIsNearNPC = useGameStore((s) => s.setIsNearNPC);
   const mode = useGameStore((s) => s.mode);
   const setMode = useGameStore((s) => s.setMode);
 
-  // Velocity smoothing
   const velocity = useRef(new THREE.Vector3());
   const targetRotation = useRef(0);
+  const isWalking = useRef(false);
 
-  // Camera follow target
   const { camera } = useThree();
   const camOffset = useMemo(() => new THREE.Vector3(0, 4.2, 6), []);
   const camLookOffset = useMemo(() => new THREE.Vector3(0, 1.4, 0), []);
 
-  // Press E to enter conversation when near NPC
+  // Press E to interact
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       if ((e.key === "e" || e.key === "E") && useGameStore.getState().isNearNPC) {
@@ -56,18 +39,14 @@ export function Player() {
     return () => window.removeEventListener("keydown", onKey);
   }, [setMode]);
 
-  // Start with idle
-  useEffect(() => {
-    const idle = actions["Idle"] || actions[Object.keys(actions)[0]];
-    idle?.reset().fadeIn(0.2).play();
-  }, [actions]);
-
-  useFrame((state, delta) => {
+  useFrame((_state, delta) => {
     const g = groupRef.current;
     if (!g) return;
 
-    // Disable input while in conversation mode
-    const k = mode === "world" ? getKeys() : { forward: false, backward: false, left: false, right: false, run: false };
+    const k = mode === "world"
+      ? getKeys()
+      : { forward: false, backward: false, left: false, right: false, run: false };
+
     const dir = new THREE.Vector3();
     if (k.forward) dir.z -= 1;
     if (k.backward) dir.z += 1;
@@ -80,42 +59,55 @@ export function Player() {
     velocity.current.lerp(dir.multiplyScalar(speed), 0.25);
     g.position.add(velocity.current);
 
-    // Face direction of motion
     if (moving) {
       targetRotation.current = Math.atan2(velocity.current.x, velocity.current.z);
     }
     g.rotation.y = THREE.MathUtils.lerp(g.rotation.y, targetRotation.current, 0.18);
+    isWalking.current = moving;
 
-    // Animation cross-fade
-    const idleA = actions["Idle"];
-    const walkA = actions["Walk"];
-    const runA = actions["Run"];
-    if (moving) {
-      const wantRun = !!k.run;
-      const target = wantRun ? runA : walkA;
-      idleA?.fadeOut(0.2);
-      (wantRun ? walkA : runA)?.fadeOut(0.2);
-      target?.reset().fadeIn(0.2).play();
-    } else {
-      walkA?.fadeOut(0.2);
-      runA?.fadeOut(0.2);
-      idleA?.reset().fadeIn(0.2).play();
-    }
-
-    // Detect proximity to NPC
     const dist = g.position.distanceTo(NPC_POSITION);
     setIsNearNPC(dist < INTERACT_RADIUS && mode === "world");
 
-    // Camera follow (third-person trailing)
     const desiredCamPos = g.position.clone().add(camOffset);
     camera.position.lerp(desiredCamPos, 0.08);
-    const lookAt = g.position.clone().add(camLookOffset);
-    camera.lookAt(lookAt);
+    camera.lookAt(g.position.clone().add(camLookOffset));
   });
 
+  // We can't conditionally update Character with state in useFrame easily,
+  // so we expose a simple fact via the store (alternative: ref-driven scale).
+  // Walking visual is handled inside Character via its own useFrame using
+  // a simple heuristic: walking when last movement occurred. We pass via prop.
+  const walkingFlag = useGameStore((s) => s.mode === "world"); // permissive while in world
+  void walkingFlag;
+
   return (
-    <group ref={groupRef} position={[0, 0, 6]} scale={1}>
-      <primitive object={cloned} />
+    <group ref={groupRef} position={[0, 0, 6]}>
+      <group ref={innerRef}>
+        <PlayerCharacter />
+      </group>
     </group>
+  );
+}
+
+// Tiny wrapper that watches the player ref and animates accordingly.
+// Simpler: just pass a tween-detected walking based on velocity each frame.
+function PlayerCharacter() {
+  // We pass walking=true when WASD pressed via a subscription
+  const isWorld = useGameStore((s) => s.mode) === "world";
+  const [, getKeys] = useKeyboardControls();
+
+  // Read keys each render (cheap), forward as prop
+  const k = getKeys();
+  const walking = isWorld && (k.forward || k.backward || k.left || k.right);
+
+  return (
+    <Character
+      color="#dc2626"
+      pants="#1f2937"
+      hair="#1f2937"
+      skin="#fdbb96"
+      walking={walking}
+      accessory="backpack"
+    />
   );
 }

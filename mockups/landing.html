@@ -1,0 +1,502 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>HuskyHac — Travel the world. Learn the language.</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@500;600;700;800;900&family=Inter:wght@400;500;600&display=swap"
+      rel="stylesheet"
+    />
+    <script src="https://unpkg.com/three@0.160.0/build/three.min.js"></script>
+    <script src="https://unpkg.com/globe.gl@2.34.4/dist/globe.gl.min.js"></script>
+    <style>
+      :root {
+        font-family: "Inter", system-ui, sans-serif;
+      }
+      .font-display { font-family: "Plus Jakarta Sans", "Inter", sans-serif; }
+
+      html, body { height: 100%; margin: 0; }
+      body {
+        background:
+          radial-gradient(ellipse 80% 60% at 50% 0%, rgba(99, 102, 241, 0.18), transparent 60%),
+          radial-gradient(ellipse 60% 40% at 50% 100%, rgba(56, 189, 248, 0.10), transparent 60%),
+          linear-gradient(180deg, #050816 0%, #0a0f24 50%, #060a1a 100%);
+        color: #e7ecf5;
+        overflow: hidden;
+      }
+
+      /* Soft starfield */
+      .stars {
+        position: fixed; inset: 0; pointer-events: none; z-index: 0;
+        background-image:
+          radial-gradient(1px 1px at 20% 30%, rgba(255,255,255,0.6), transparent 60%),
+          radial-gradient(1px 1px at 80% 20%, rgba(255,255,255,0.5), transparent 60%),
+          radial-gradient(1px 1px at 35% 75%, rgba(255,255,255,0.4), transparent 60%),
+          radial-gradient(1px 1px at 65% 60%, rgba(255,255,255,0.5), transparent 60%),
+          radial-gradient(1px 1px at 90% 85%, rgba(255,255,255,0.4), transparent 60%),
+          radial-gradient(1px 1px at 12% 88%, rgba(255,255,255,0.45), transparent 60%),
+          radial-gradient(1px 1px at 50% 12%, rgba(255,255,255,0.5), transparent 60%);
+      }
+
+      #globe {
+        position: fixed; inset: 0; z-index: 1;
+        cursor: grab;
+      }
+      #globe:active { cursor: grabbing; }
+      #globe canvas { display: block; }
+
+      /* Hint pulse for unselected globe */
+      .hint-pulse {
+        animation: hint 2.4s ease-in-out infinite;
+      }
+      @keyframes hint {
+        0%, 100% { opacity: 0.55; transform: translateY(0); }
+        50%      { opacity: 1;    transform: translateY(-2px); }
+      }
+
+      /* CTA slide-in */
+      .cta-wrap {
+        transform: translateY(120%);
+        opacity: 0;
+        transition: transform .55s cubic-bezier(.2,.7,.2,1), opacity .35s ease;
+      }
+      .cta-wrap.show {
+        transform: translateY(0);
+        opacity: 1;
+      }
+
+      /* Country chip pop */
+      .chip {
+        transform: translateY(-8px) scale(.96);
+        opacity: 0;
+        transition: transform .35s cubic-bezier(.2,.7,.2,1), opacity .25s ease;
+      }
+      .chip.show {
+        transform: translateY(0) scale(1);
+        opacity: 1;
+      }
+
+      /* Toast */
+      .toast {
+        transform: translateY(-16px);
+        opacity: 0;
+        transition: transform .3s ease, opacity .25s ease;
+      }
+      .toast.show {
+        transform: translateY(0);
+        opacity: 1;
+      }
+
+      /* Big CTA button */
+      .cta-btn {
+        background:
+          linear-gradient(180deg, rgba(255,255,255,0.08) 0%, rgba(255,255,255,0) 100%),
+          linear-gradient(135deg, #ff7a59 0%, #ff4f8b 50%, #b066ff 100%);
+        box-shadow:
+          0 18px 40px -10px rgba(255, 79, 139, 0.55),
+          0 4px 14px rgba(176, 102, 255, 0.35),
+          inset 0 1px 0 rgba(255,255,255,0.25);
+      }
+      .cta-btn:hover { filter: brightness(1.05) saturate(1.05); transform: translateY(-1px); }
+      .cta-btn:active { transform: translateY(0); }
+      .cta-btn[disabled] {
+        background: rgba(255,255,255,0.06);
+        box-shadow: none;
+        color: rgba(255,255,255,0.45);
+        cursor: not-allowed;
+      }
+
+      .glass {
+        background: rgba(10, 16, 36, 0.55);
+        backdrop-filter: blur(14px) saturate(1.3);
+        -webkit-backdrop-filter: blur(14px) saturate(1.3);
+      }
+
+      /* Flag marker */
+      .flag-pin {
+        font-size: 28px;
+        line-height: 1;
+        filter: drop-shadow(0 6px 8px rgba(0,0,0,0.45));
+        transform: translate(-50%, -100%);
+        pointer-events: none;
+        animation: drop 0.55s cubic-bezier(.2,1.4,.4,1) both;
+      }
+      @keyframes drop {
+        0%   { transform: translate(-50%, -240%); opacity: 0; }
+        70%  { transform: translate(-50%, -90%);  opacity: 1; }
+        100% { transform: translate(-50%, -100%); opacity: 1; }
+      }
+
+      .title-grad {
+        background: linear-gradient(180deg, #ffffff 0%, #cdd5ff 100%);
+        -webkit-background-clip: text; background-clip: text;
+        color: transparent;
+      }
+
+      .accent-grad {
+        background: linear-gradient(90deg, #ffb05a 0%, #ff6aa1 50%, #b08bff 100%);
+        -webkit-background-clip: text; background-clip: text;
+        color: transparent;
+      }
+
+      .ring-soft { box-shadow: inset 0 0 0 1px rgba(255,255,255,0.08); }
+
+      .scroll-fade {
+        mask-image: linear-gradient(180deg, black 70%, transparent 100%);
+      }
+
+      /* Disable text selection on globe overlay */
+      .no-select { user-select: none; -webkit-user-select: none; }
+    </style>
+  </head>
+  <body class="no-select">
+    <div class="stars"></div>
+    <div id="globe"></div>
+
+    <!-- TOP NAV -->
+    <header class="fixed top-0 inset-x-0 z-30 px-6 sm:px-10 py-5 flex items-center justify-between">
+      <div class="flex items-center gap-2">
+        <div class="w-8 h-8 rounded-xl bg-gradient-to-br from-orange-400 via-pink-500 to-violet-500 grid place-items-center shadow-lg shadow-pink-500/30">
+          <span class="text-white font-black">H</span>
+        </div>
+        <span class="font-display font-extrabold tracking-tight text-lg">HuskyHac</span>
+      </div>
+      <nav class="hidden sm:flex items-center gap-1 text-sm text-slate-300/90">
+        <a class="px-3 py-1.5 rounded-full hover:bg-white/5" href="#">How it works</a>
+        <a class="px-3 py-1.5 rounded-full hover:bg-white/5" href="#">Languages</a>
+        <a class="px-3 py-1.5 rounded-full hover:bg-white/5" href="#">About</a>
+        <button class="ml-2 glass rounded-full px-4 py-1.5 ring-soft hover:bg-white/10">Sign in</button>
+      </nav>
+    </header>
+
+    <!-- HERO TITLE -->
+    <section class="fixed inset-x-0 top-20 sm:top-24 z-20 flex flex-col items-center text-center px-6 pointer-events-none">
+      <div class="glass rounded-full px-3 py-1.5 ring-soft pointer-events-auto mb-4 flex items-center gap-2 text-xs text-slate-300">
+        <span class="relative flex h-2 w-2">
+          <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-60"></span>
+          <span class="relative inline-flex rounded-full h-2 w-2 bg-emerald-400"></span>
+        </span>
+        Live AI travel companion · OpenAI Realtime voice
+      </div>
+
+      <h1 class="font-display font-black tracking-tight text-4xl sm:text-6xl md:text-7xl leading-[0.95]">
+        <span class="title-grad">Travel the world.</span><br/>
+        <span class="accent-grad">Learn the language.</span>
+      </h1>
+      <p class="mt-5 max-w-xl text-base sm:text-lg text-slate-300/90">
+        Step off the plane, walk the airport, talk your way through it.
+        Pick a country to start your trip.
+      </p>
+    </section>
+
+    <!-- COUNTRY CHIP (top-left when selected) -->
+    <div id="chip" class="chip fixed top-32 left-6 sm:left-10 z-30 glass rounded-2xl ring-soft px-4 py-3 flex items-center gap-3">
+      <span id="chip-flag" class="text-2xl leading-none">🇫🇷</span>
+      <div>
+        <div id="chip-name" class="font-display font-bold text-sm leading-tight">France</div>
+        <div id="chip-meta" class="text-xs text-slate-400">French · A1 → B2 routes ready</div>
+      </div>
+      <button id="chip-clear" class="ml-2 w-7 h-7 rounded-full hover:bg-white/10 grid place-items-center text-slate-300">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg>
+      </button>
+    </div>
+
+    <!-- TOAST (coming soon) -->
+    <div id="toast" class="toast fixed top-32 left-1/2 -translate-x-1/2 z-30 glass rounded-full ring-soft px-4 py-2 text-sm text-slate-200">
+      <span class="mr-2">✈️</span>
+      <span id="toast-text">Coming soon — only France is available in V1.</span>
+    </div>
+
+    <!-- HINT bottom-left -->
+    <div class="fixed bottom-6 left-6 z-20 text-xs text-slate-400 hint-pulse hidden sm:flex items-center gap-2">
+      <kbd class="font-mono px-1.5 py-0.5 rounded bg-white/5 ring-1 ring-white/10">drag</kbd>
+      to spin the globe
+      <span class="opacity-30">·</span>
+      <kbd class="font-mono px-1.5 py-0.5 rounded bg-white/5 ring-1 ring-white/10">scroll</kbd>
+      to zoom
+    </div>
+
+    <!-- CTA -->
+    <div id="cta" class="cta-wrap fixed bottom-8 left-1/2 -translate-x-1/2 z-30 flex flex-col items-center gap-2">
+      <button id="start-btn" class="cta-btn font-display font-bold text-white text-base sm:text-lg rounded-full px-7 py-4 flex items-center gap-3">
+        <span id="start-flag" class="text-2xl">🇫🇷</span>
+        <span>Start simulating your experience</span>
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 5l7 7-7 7"/></svg>
+      </button>
+      <span class="text-xs text-slate-400">You'll arrive at <strong class="text-slate-200" id="cta-place">Charles de Gaulle, Paris</strong></span>
+    </div>
+
+    <script>
+      // ---------- Country support map ----------
+      const SUPPORTED = {
+        France: {
+          flag: '🇫🇷',
+          language: 'French',
+          place: 'Charles de Gaulle, Paris',
+          subtitle: 'French · A1 → B2 routes ready',
+          status: 'available',
+          centroid: [2.3522, 48.8566],
+        },
+      };
+
+      const TEASERS = {
+        Japan:        { flag: '🇯🇵', language: 'Japanese' },
+        Spain:        { flag: '🇪🇸', language: 'Spanish' },
+        Italy:        { flag: '🇮🇹', language: 'Italian' },
+        Germany:      { flag: '🇩🇪', language: 'German' },
+        Mexico:       { flag: '🇲🇽', language: 'Spanish' },
+        Brazil:       { flag: '🇧🇷', language: 'Portuguese' },
+        China:        { flag: '🇨🇳', language: 'Mandarin' },
+        Portugal:     { flag: '🇵🇹', language: 'Portuguese' },
+        'South Korea':{ flag: '🇰🇷', language: 'Korean' },
+        Netherlands:  { flag: '🇳🇱', language: 'Dutch' },
+        India:        { flag: '🇮🇳', language: 'Hindi' },
+        Greece:       { flag: '🇬🇷', language: 'Greek' },
+        Turkey:       { flag: '🇹🇷', language: 'Turkish' },
+        Egypt:        { flag: '🇪🇬', language: 'Arabic' },
+        Russia:       { flag: '🇷🇺', language: 'Russian' },
+      };
+
+      // ---------- Globe setup ----------
+      const OCEAN  = '#1e6fb8';        // cartoon ocean
+      const LAND   = '#3da35a';        // cartoon green continents
+      const LAND_DARK = '#27784a';     // extrusion side
+      const SELECT_LAND = '#ffd66e';   // selected country
+      const HOVER_LAND  = '#7fd99c';
+      const TEASER_LAND = '#7fd99c';
+
+      const world = Globe()
+        (document.getElementById('globe'))
+        .backgroundColor('rgba(0,0,0,0)')
+        .showGlobe(true)
+        .showAtmosphere(true)
+        .atmosphereColor('#9ec9ff')
+        .atmosphereAltitude(0.22)
+        .globeImageUrl(null)
+        .pointOfView({ lat: 25, lng: 8, altitude: 2.2 }, 0);
+
+      // Solid cartoon ocean (override globe material)
+      try {
+        const mat = world.globeMaterial();
+        mat.color = new THREE.Color(OCEAN);
+        mat.shininess = 6;
+        mat.emissive = new THREE.Color('#0a3a66');
+        mat.emissiveIntensity = 0.15;
+      } catch (e) {}
+
+      // Auto rotate while idle
+      const controls = world.controls();
+      controls.autoRotate = true;
+      controls.autoRotateSpeed = 0.35;
+      controls.enablePan = false;
+      controls.minDistance = 180;
+      controls.maxDistance = 600;
+
+      // Pause autorotate on interaction
+      const stopAuto = () => { controls.autoRotate = false; };
+      ['mousedown','touchstart','wheel'].forEach(ev =>
+        document.getElementById('globe').addEventListener(ev, stopAuto, { passive: true })
+      );
+
+      // ---------- Load countries (Natural Earth 110m) ----------
+      const COUNTRIES_URL = 'https://raw.githubusercontent.com/vasturiano/globe.gl/master/example/datasets/ne_110m_admin_0_countries.geojson';
+
+      let selected = null;
+      let hovered  = null;
+
+      fetch(COUNTRIES_URL)
+        .then(r => r.json())
+        .then(geo => {
+          // Filter out Antarctica for cleanliness
+          const features = geo.features.filter(f => f.properties.ADMIN !== 'Antarctica');
+
+          world
+            .polygonsData(features)
+            .polygonAltitude(d => {
+              if (selected && d.properties.ADMIN === selected) return 0.06;
+              if (hovered  && d.properties.ADMIN === hovered)  return 0.045;
+              return 0.018;
+            })
+            .polygonCapColor(d => {
+              const name = d.properties.ADMIN;
+              if (selected === name) return SELECT_LAND;
+              if (hovered  === name) return HOVER_LAND;
+              if (SUPPORTED[name])   return '#ffe28a';   // subtle highlight on supported
+              if (TEASERS[name])     return TEASER_LAND;
+              return LAND;
+            })
+            .polygonSideColor(() => LAND_DARK)
+            .polygonStrokeColor(() => 'rgba(0,0,0,0.35)')
+            .polygonsTransitionDuration(350)
+            .polygonLabel(d => {
+              const name = d.properties.ADMIN;
+              if (SUPPORTED[name]) {
+                const s = SUPPORTED[name];
+                return `<div style="background:rgba(10,16,36,.92);padding:8px 12px;border-radius:12px;border:1px solid rgba(255,255,255,.1);font-family:Inter,sans-serif;color:#e7ecf5;">
+                  <div style="font-weight:700;display:flex;align-items:center;gap:6px;">${s.flag} ${name}</div>
+                  <div style="font-size:11px;opacity:.7">Click to start your ${s.language} trip</div>
+                </div>`;
+              }
+              if (TEASERS[name]) {
+                const t = TEASERS[name];
+                return `<div style="background:rgba(10,16,36,.92);padding:8px 12px;border-radius:12px;border:1px solid rgba(255,255,255,.1);font-family:Inter,sans-serif;color:#e7ecf5;">
+                  <div style="font-weight:700;display:flex;align-items:center;gap:6px;">${t.flag} ${name}</div>
+                  <div style="font-size:11px;opacity:.7">${t.language} — coming soon</div>
+                </div>`;
+              }
+              return `<div style="background:rgba(10,16,36,.92);padding:6px 10px;border-radius:10px;border:1px solid rgba(255,255,255,.08);font-family:Inter,sans-serif;color:#e7ecf5;font-size:12px;">${name}</div>`;
+            })
+            .onPolygonHover(p => {
+              hovered = p ? p.properties.ADMIN : null;
+              document.body.style.cursor = p ? 'pointer' : 'default';
+              world.polygonAltitude(world.polygonAltitude());
+              world.polygonCapColor(world.polygonCapColor());
+            })
+            .onPolygonClick((p) => {
+              if (!p) return;
+              const name = p.properties.ADMIN;
+              selectCountry(name, p);
+            });
+
+          // Compute centroid for a feature (rough average of polygon coords)
+          window._featureCentroid = function(feature) {
+            const coords = [];
+            const geom = feature.geometry;
+            const collect = arr => {
+              if (typeof arr[0] === 'number') coords.push(arr);
+              else arr.forEach(collect);
+            };
+            collect(geom.coordinates);
+            const n = coords.length || 1;
+            let lng = 0, lat = 0;
+            coords.forEach(c => { lng += c[0]; lat += c[1]; });
+            return [lng / n, lat / n];
+          };
+
+          // After load, focus camera nicely
+          world.pointOfView({ lat: 30, lng: 5, altitude: 2.3 }, 1200);
+        });
+
+      // ---------- Selection logic ----------
+      const chip   = document.getElementById('chip');
+      const cta    = document.getElementById('cta');
+      const startBtn = document.getElementById('start-btn');
+      const startFlag = document.getElementById('start-flag');
+      const ctaPlace = document.getElementById('cta-place');
+      const chipFlag = document.getElementById('chip-flag');
+      const chipName = document.getElementById('chip-name');
+      const chipMeta = document.getElementById('chip-meta');
+      const toast    = document.getElementById('toast');
+      const toastText = document.getElementById('toast-text');
+      let toastTimer = null;
+
+      function showToast(msg) {
+        toastText.textContent = msg;
+        toast.classList.add('show');
+        clearTimeout(toastTimer);
+        toastTimer = setTimeout(() => toast.classList.remove('show'), 2400);
+      }
+
+      function clearSelection() {
+        selected = null;
+        chip.classList.remove('show');
+        cta.classList.remove('show');
+        startBtn.disabled = false;
+        controls.autoRotate = true;
+        // refresh polygon styles
+        if (world.polygonsData().length) {
+          world.polygonAltitude(world.polygonAltitude());
+          world.polygonCapColor(world.polygonCapColor());
+        }
+      }
+
+      function selectCountry(name, feature) {
+        const supported = SUPPORTED[name];
+        const teaser    = TEASERS[name];
+
+        if (!supported && !teaser) {
+          showToast(`✈️  ${name} isn't on the language map yet.`);
+          return;
+        }
+
+        selected = name;
+        controls.autoRotate = false;
+
+        // refresh polygon styles
+        world.polygonAltitude(world.polygonAltitude());
+        world.polygonCapColor(world.polygonCapColor());
+
+        // Centroid + camera ease
+        let lng, lat;
+        if (supported) { [lng, lat] = supported.centroid; }
+        else           { [lng, lat] = window._featureCentroid(feature); }
+        world.pointOfView({ lat: lat, lng: lng, altitude: 1.6 }, 1100);
+
+        // Drop a flag pin on the country
+        const flag = supported?.flag ?? teaser.flag;
+        world.htmlElementsData([
+          { lat, lng, html: `<div class="flag-pin">${flag}</div>` }
+        ]).htmlElement(d => {
+          const el = document.createElement('div');
+          el.innerHTML = d.html;
+          return el.firstChild;
+        }).htmlAltitude(0.07);
+
+        // Chip
+        chipFlag.textContent = flag;
+        chipName.textContent = name;
+        chipMeta.textContent = supported
+          ? supported.subtitle
+          : `${teaser.language} — coming soon`;
+        chip.classList.add('show');
+
+        // CTA
+        startFlag.textContent = flag;
+        if (supported) {
+          startBtn.disabled = false;
+          startBtn.querySelector('span:nth-child(2)').textContent = 'Start simulating your experience';
+          ctaPlace.textContent = supported.place;
+        } else {
+          startBtn.disabled = true;
+          startBtn.querySelector('span:nth-child(2)').textContent = `${teaser.language} — coming soon`;
+          ctaPlace.textContent = `${name} routes are in production`;
+        }
+        cta.classList.add('show');
+      }
+
+      document.getElementById('chip-clear').addEventListener('click', () => {
+        // Remove pin
+        world.htmlElementsData([]);
+        clearSelection();
+      });
+
+      document.getElementById('start-btn').addEventListener('click', () => {
+        if (startBtn.disabled) return;
+        // Mockup: pretend to launch
+        startBtn.classList.add('pointer-events-none');
+        startBtn.querySelector('span:nth-child(2)').textContent = 'Boarding…';
+        document.body.style.transition = 'filter .8s ease, opacity .8s ease';
+        document.body.style.filter = 'brightness(1.4) saturate(1.2)';
+        setTimeout(() => { document.body.style.opacity = '0'; }, 600);
+        setTimeout(() => {
+          alert('🛬  This is where the airport scene loads.\n(Stub /play route in the real build.)');
+          document.body.style.opacity = '1';
+          document.body.style.filter = '';
+          startBtn.classList.remove('pointer-events-none');
+          startBtn.querySelector('span:nth-child(2)').textContent = 'Start simulating your experience';
+        }, 1400);
+      });
+
+      // Resize
+      window.addEventListener('resize', () => {
+        world.width(window.innerWidth);
+        world.height(window.innerHeight);
+      });
+      world.width(window.innerWidth).height(window.innerHeight);
+    </script>
+  </body>
+</html>

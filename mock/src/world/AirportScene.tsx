@@ -1,5 +1,5 @@
 import { useRef } from "react";
-import { Text, ContactShadows, Environment } from "@react-three/drei";
+import { Text, ContactShadows } from "@react-three/drei";
 import { useFrame } from "@react-three/fiber";
 import * as THREE from "three";
 
@@ -15,23 +15,7 @@ import * as THREE from "three";
 export function AirportScene() {
   return (
     <>
-      {/* ===== lighting ===== */}
-      <Environment
-        files="https://dl.polyhaven.org/file/ph-assets/HDRIs/hdr/1k/airport_room_1k.hdr"
-        background
-        backgroundBlurriness={0.05}
-      />
-      <ambientLight intensity={0.4} />
-      <directionalLight
-        position={[8, 14, 6]}
-        intensity={1.4}
-        castShadow
-        shadow-mapSize={[2048, 2048]}
-        shadow-camera-left={-20}
-        shadow-camera-right={20}
-        shadow-camera-top={20}
-        shadow-camera-bottom={-20}
-      />
+      {/* ===== ambient hemisphere fill ===== */}
       <hemisphereLight args={["#cce4ff", "#403020", 0.45]} />
 
       {/* ===== floor ===== */}
@@ -82,9 +66,8 @@ export function AirportScene() {
           color="#fde68a"
           anchorX="center"
           anchorY="middle"
-          font="https://fonts.gstatic.com/s/inter/v12/UcC73FwrK3iLTeHuS_fvQtMwCp50KnMa1ZL7.woff"
         >
-          INFORMATION · ℹ
+          INFORMATION
         </Text>
         <Text
           position={[0, 2.85, 0.07]}
