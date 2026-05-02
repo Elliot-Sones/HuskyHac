@@ -34,6 +34,14 @@ export function GlobeCanvas({ selected, pin, onPickCountry, onUnknownCountry }: 
   const [hovered, setHovered] = useState<string | null>(null);
   const [size, setSize] = useState({ w: window.innerWidth, h: window.innerHeight });
 
+  const oceanMaterial = useMemo(
+    () =>
+      new THREE.MeshBasicMaterial({
+        color: new THREE.Color(OCEAN),
+      }),
+    [],
+  );
+
   useEffect(() => {
     let cancelled = false;
     fetch(COUNTRIES_GEOJSON_URL)
@@ -137,6 +145,7 @@ export function GlobeCanvas({ selected, pin, onPickCountry, onUnknownCountry }: 
         width={size.w}
         height={size.h}
         backgroundColor="rgba(0,0,0,0)"
+        globeMaterial={oceanMaterial}
         showGlobe
         showAtmosphere
         atmosphereColor="#a8c8ff"
