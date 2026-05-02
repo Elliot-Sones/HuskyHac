@@ -282,8 +282,24 @@ function Bus({ position }: { position: [number, number, number] }) {
     <group position={position}>
       <mesh castShadow position={[0, 0.7, 0]}>
         <boxGeometry args={[5.1, 1.25, 1.5]} />
-        <meshStandardMaterial color="#2f6edb" roughness={0.44} metalness={0.04} />
+        <meshStandardMaterial
+          color="#2f6edb"
+          roughness={0.44}
+          metalness={0.04}
+          transparent
+          opacity={0.62}
+        />
       </mesh>
+      <group position={[-1.8, 0.075, 0.5]} rotation={[0, -Math.PI / 2, 0]} scale={0.55}>
+        <Character
+          color="#0f2547"
+          pants="#0b1220"
+          hair="#1a0f06"
+          skin="#cf9e75"
+          accessory="nametag"
+          idleBob={false}
+        />
+      </group>
       <mesh position={[0, 1.07, -0.78]}>
         <boxGeometry args={[4.55, 0.42, 0.08]} />
         <meshStandardMaterial color="#dbeafe" roughness={0.22} metalness={0.04} />

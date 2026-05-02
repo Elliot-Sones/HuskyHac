@@ -22,7 +22,7 @@ export interface WorldCameraRig {
 }
 
 export interface WorldConversationFocus {
-  view?: 'taxiInterior';
+  view?: 'taxiInterior' | 'busInterior';
   camera: THREE.Vector3;
   look: THREE.Vector3;
   avatarPosition?: THREE.Vector3;

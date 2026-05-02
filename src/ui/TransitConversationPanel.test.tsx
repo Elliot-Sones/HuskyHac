@@ -6,6 +6,15 @@ import { TransitConversationPanel } from '@/ui/TransitConversationPanel';
 import { TRANSIT_DIALOGUES } from '@/world/transitDialogues';
 
 const mocks = vi.hoisted(() => ({
+  speechInput: {
+    isSupported: vi.fn(() => true),
+    listen: vi.fn(async () => ({
+      text: 'Je voudrais aller a la Tour Eiffel.',
+      confidence: 0.98,
+      source: 'speech' as const,
+    })),
+    stop: vi.fn(),
+  },
   useLessonStore: vi.fn(),
 }));
 
@@ -14,6 +23,11 @@ const mocks = vi.hoisted(() => ({
 
 vi.mock('@/state/lessonStore', () => ({
   useLessonStore: mocks.useLessonStore,
+}));
+
+vi.mock('@/conversation', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('@/conversation')>()),
+  createDefaultSpeechInput: () => mocks.speechInput,
 }));
 
 let root: Root | null = null;
@@ -68,7 +82,34 @@ describe('TransitConversationPanel', () => {
 
     expect(onTravelDestination).toHaveBeenCalledWith('france-eiffel_tour');
   });
+
+  it('shows the Eiffel Tower travel action when the user clicks the Eiffel text option', async () => {
+    mocks.useLessonStore.mockReturnValue(createLessonStoreMock());
+
+    await renderTransitConversationPanel();
+    await clickButton(getButtonByText('Tour Eiffel'));
+
+    expect(getButtonByText('Go to the Eiffel Tower')).not.toBeNull();
+  });
+
+  it('shows the Eiffel Tower travel action when the user says an Eiffel Tower request', async () => {
+    mocks.useLessonStore.mockReturnValue(createLessonStoreMock());
+
+    await renderTransitConversationPanel();
+    await clickByAriaLabel('Answer by voice');
+
+    expect(mocks.speechInput.listen).toHaveBeenCalledWith({ lang: 'fr-FR' });
+    expect(getButtonByText('Go to the Eiffel Tower')).not.toBeNull();
+  });
 });
+
+function createLessonStoreMock() {
+  return {
+    autoPlayNpcLine: vi.fn(async () => {}),
+    speechInputSupported: true,
+    speechOutputSupported: true,
+  };
+}
 
 async function renderTransitConversationPanel({
   onTravelDestination = vi.fn(),

@@ -1,5 +1,6 @@
 import type { FormEvent } from 'react';
 import { useEffect, useMemo, useRef, useState } from 'react';
+import { createDefaultSpeechInput } from '@/conversation';
 import type { ResponseOption } from '@/shared/contracts';
 import { useLessonStore } from '@/state/lessonStore';
 import { NpcCard } from '@/ui/NpcCard';
@@ -21,6 +22,7 @@ export function TransitConversationPanel({
   onTravelDestination,
 }: TransitConversationPanelProps) {
   const lesson = useLessonStore();
+  const speechInput = useMemo(() => createDefaultSpeechInput(), []);
   const playedOpeningIdRef = useRef<string | null>(null);
   const recommended = useMemo(
     () => dialogue.responses.find((response) => response.recommended) ?? dialogue.responses[0],
@@ -30,7 +32,10 @@ export function TransitConversationPanel({
   const [draft, setDraft] = useState(recommended.french);
   const [practiced, setPracticed] = useState(false);
   const [showTyping, setShowTyping] = useState(false);
+  const [isListening, setIsListening] = useState(false);
+  const [speechError, setSpeechError] = useState<string | null>(null);
   const eiffelTowerRequested = practiced && isEiffelTowerRequest(draft);
+  const speechInputSupported = Boolean(lesson.speechInputSupported && speechInput.isSupported());
 
   useEffect(() => {
     if (
@@ -47,7 +52,8 @@ export function TransitConversationPanel({
   function chooseResponse(response: ResponseOption) {
     setSelected(response);
     setDraft(response.french);
-    setPracticed(false);
+    setPracticed(isEiffelTowerRequest(response.french));
+    setSpeechError(null);
   }
 
   function handleSubmit(event: FormEvent<HTMLFormElement>) {
@@ -59,6 +65,32 @@ export function TransitConversationPanel({
   function handlePractice() {
     if (!draft.trim()) return;
     setPracticed(true);
+  }
+
+  async function handleVoiceAnswer() {
+    if (isListening) {
+      speechInput.stop();
+      setIsListening(false);
+      return;
+    }
+
+    if (!speechInputSupported) {
+      setSpeechError('Microphone recording is unavailable here. Use a text option instead.');
+      return;
+    }
+
+    setIsListening(true);
+    setSpeechError(null);
+
+    try {
+      const transcript = await speechInput.listen({ lang: 'fr-FR' });
+      setDraft(transcript.text);
+      setPracticed(true);
+    } catch (error) {
+      setSpeechError(error instanceof Error ? error.message : 'Recording failed.');
+    } finally {
+      setIsListening(false);
+    }
   }
 
   function handleReplay() {
@@ -156,6 +188,14 @@ export function TransitConversationPanel({
             </div>
           )}
 
+          {speechError && (
+            <div className="border-b border-white/[0.06] px-5 py-3">
+              <div className="rounded-2xl border border-rose-200/20 bg-rose-300/[0.08] px-3 py-2 text-[12px] leading-relaxed text-rose-50/90">
+                {speechError}
+              </div>
+            </div>
+          )}
+
           <div className="grid grid-cols-1 gap-0 lg:grid-cols-[minmax(0,1fr)_auto]">
             <div className="px-5 py-3.5">
               <ResponseOptions
@@ -165,6 +205,13 @@ export function TransitConversationPanel({
               />
             </div>
             <div className="flex items-center justify-center gap-3 border-t border-white/[0.06] px-6 py-3.5 lg:border-l lg:border-t-0">
+              <VoiceButton
+                isListening={isListening}
+                isSupported={speechInputSupported}
+                onClick={() => {
+                  void handleVoiceAnswer();
+                }}
+              />
               <PracticeButton onClick={handlePractice} disabled={!draft.trim()} />
             </div>
           </div>
@@ -214,6 +261,46 @@ function isEiffelTowerRequest(text: string) {
   return /\b(?:eiffel|tour eiffel)\b/i.test(text.normalize('NFD').replace(/[\u0300-\u036f]/g, ''));
 }
 
+function VoiceButton({
+  isListening,
+  isSupported,
+  onClick,
+}: {
+  isListening: boolean;
+  isSupported: boolean;
+  onClick: () => void;
+}) {
+  const label = isListening ? 'Stop voice answer' : 'Answer by voice';
+
+  return (
+    <div className="flex flex-col items-center gap-1.5">
+      <button
+        type="button"
+        aria-label={label}
+        aria-pressed={isListening}
+        disabled={!isSupported}
+        onClick={onClick}
+        className={`relative grid h-16 w-16 place-items-center rounded-full transition active:scale-95 disabled:cursor-not-allowed disabled:bg-slate-500 disabled:text-slate-300 disabled:shadow-none ${
+          isListening
+            ? 'bg-rose-500 text-white shadow-[0_18px_38px_-10px_rgba(244,63,94,0.55)] hover:bg-rose-400'
+            : 'bg-sky-300 text-sky-950 shadow-[0_18px_38px_-10px_rgba(56,189,248,0.45)] hover:bg-sky-200'
+        }`}
+      >
+        <MicIcon recording={isListening} />
+        {isListening && (
+          <span
+            aria-hidden="true"
+            className="absolute inset-0 animate-ping rounded-full border-2 border-rose-300/60"
+          />
+        )}
+      </button>
+      <span className="text-[10px] font-bold uppercase tracking-[0.22em] text-slate-400">
+        Voice
+      </span>
+    </div>
+  );
+}
+
 function PracticeButton({ onClick, disabled }: { onClick: () => void; disabled: boolean }) {
   return (
     <div className="flex flex-col items-center gap-1.5">
@@ -237,6 +324,38 @@ function PracticeButton({ onClick, disabled }: { onClick: () => void; disabled: 
         Practice
       </span>
     </div>
+  );
+}
+
+function MicIcon({ recording }: { recording: boolean }) {
+  if (recording) {
+    return (
+      <svg
+        viewBox="0 0 24 24"
+        fill="currentColor"
+        aria-hidden="true"
+        className="h-5 w-5"
+      >
+        <rect x="6" y="6" width="12" height="12" rx="2" />
+      </svg>
+    );
+  }
+
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth={2.2}
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+      className="h-6 w-6"
+    >
+      <rect x="9" y="3" width="6" height="12" rx="3" />
+      <path d="M5 11a7 7 0 0 0 14 0" />
+      <path d="M12 18v3" />
+    </svg>
   );
 }
 

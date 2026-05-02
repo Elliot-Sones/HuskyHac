@@ -15,6 +15,19 @@ export function createTransitConversationFocus(target: WorldTransitTarget): Worl
     };
   }
 
+  if (target.id === 'bus') {
+    const busSeat = new THREE.Vector3(-9.0, 0.04, -28.7);
+
+    return {
+      view: 'busInterior',
+      camera: busSeat.clone().add(new THREE.Vector3(0, 1.01, 0)),
+      look: busSeat.clone().add(new THREE.Vector3(-2.5, 0.95, 0)),
+      avatarPosition: busSeat,
+      avatarRotationY: Math.PI / 2,
+      avatarScale: 0.48,
+    };
+  }
+
   const targetPosition = new THREE.Vector3(target.position.x, 0, target.position.z);
 
   return {
