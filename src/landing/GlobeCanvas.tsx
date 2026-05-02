@@ -9,8 +9,8 @@ type Feature = {
   geometry: any;
 };
 
-const OCEAN = '#1e63b8';
-const OCEAN_GLOW = '#2a7ad9';
+const OCEAN = '#2275cc';
+const OCEAN_GLOW = '#3a8ee0';
 const LAND = '#5b9c79';
 const LAND_DARK = '#2c5e44';
 const LAND_SUPPORTED = '#86b89c';
@@ -62,8 +62,8 @@ export function GlobeCanvas({ selected, pin, onPickCountry, onUnknownCountry }: 
         const mat = g.globeMaterial() as THREE.MeshPhongMaterial;
         mat.color = new THREE.Color(OCEAN);
         mat.emissive = new THREE.Color(OCEAN_GLOW);
-        mat.emissiveIntensity = 0.12;
-        mat.shininess = 4;
+        mat.emissiveIntensity = 0.55;
+        mat.shininess = 8;
       } catch {
         /* material may not be ready yet */
       }
