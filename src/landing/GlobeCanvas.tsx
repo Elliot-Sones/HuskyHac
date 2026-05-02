@@ -60,10 +60,11 @@ export function GlobeCanvas({ selected, pin, onPickCountry, onUnknownCountry }: 
       if (!g) return;
       try {
         const mat = g.globeMaterial() as THREE.MeshPhongMaterial;
-        mat.color = new THREE.Color(OCEAN);
-        mat.emissive = new THREE.Color(OCEAN_GLOW);
-        mat.emissiveIntensity = 0.55;
-        mat.shininess = 8;
+        mat.color.set(OCEAN);
+        mat.emissive.set(OCEAN);
+        mat.emissiveIntensity = 1;
+        mat.shininess = 0;
+        mat.needsUpdate = true;
       } catch {
         /* material may not be ready yet */
       }

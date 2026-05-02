@@ -54,7 +54,7 @@ function makeReply(source: NpcBrainReply['source']): NpcBrainReply {
     },
     feedback: {},
     suggestedResponses: [],
-    scene: { complete: false, score: 0 },
+    scene: { complete: false, reason: '', score: 0 },
     memoryFacts: [],
   };
 }

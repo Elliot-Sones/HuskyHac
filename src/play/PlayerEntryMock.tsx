@@ -3,19 +3,18 @@ import { Canvas } from '@react-three/fiber';
 import { ContactShadows, Environment, OrbitControls, PerspectiveCamera } from '@react-three/drei';
 import type { PlayerAccessory } from '@/shared/contracts';
 import type { PlayDestination } from '@/play/destinations';
+import {
+  accessories,
+  avatarColors,
+  readLocalPlayerProfile,
+  saveLocalPlayerProfile,
+  type LocalPlayerProfile,
+} from '@/play/playerProfile';
 import { Character } from '@/world/Character';
-
-const avatarColors = [
-  { name: 'blue', value: '#2563eb' },
-  { name: 'green', value: '#16a34a' },
-  { name: 'orange', value: '#ea580c' },
-  { name: 'purple', value: '#9333ea' },
-];
-const accessories: PlayerAccessory[] = ['backpack', 'nametag', 'scarf', 'suitcase'];
 
 interface PlayerEntryMockProps {
   destination: PlayDestination;
-  onLaunch: () => void;
+  onLaunch: (profile: LocalPlayerProfile) => void;
 }
 
 interface AvatarPreviewProps {
@@ -79,21 +78,14 @@ function AvatarPreview({ color, accessory }: AvatarPreviewProps) {
 }
 
 export function PlayerEntryMock({ destination, onLaunch }: PlayerEntryMockProps) {
-  const [name, setName] = useState(() => {
-    return window.localStorage.getItem('huskyhac.playerName') || 'Traveler 22';
-  });
-  const [color, setColor] = useState(() => {
-    return window.localStorage.getItem('huskyhac.playerColor') || avatarColors[0].value;
-  });
-  const [accessory, setAccessory] = useState<PlayerAccessory>(() => {
-    return (window.localStorage.getItem('huskyhac.playerAccessory') as PlayerAccessory | null) || 'backpack';
-  });
+  const [initialProfile] = useState(() => readLocalPlayerProfile());
+  const [name, setName] = useState(initialProfile.displayName);
+  const [color, setColor] = useState(initialProfile.color);
+  const [accessory, setAccessory] = useState<PlayerAccessory>(initialProfile.accessory);
 
   function launchGame() {
-    window.localStorage.setItem('huskyhac.playerName', name.trim() || 'Traveler');
-    window.localStorage.setItem('huskyhac.playerColor', color);
-    window.localStorage.setItem('huskyhac.playerAccessory', accessory);
-    onLaunch();
+    const profile = saveLocalPlayerProfile({ displayName: name, color, accessory });
+    onLaunch(profile);
   }
 
   return (

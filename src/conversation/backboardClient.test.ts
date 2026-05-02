@@ -100,7 +100,7 @@ describe('createBackboardNpcBrain', () => {
       );
     });
 
-    const brain = createBackboardNpcBrain({ fetcher });
+    const brain = createBackboardNpcBrain({ fetcher, storage: new MemoryStorage() });
 
     await expect(
       brain.generateReply({

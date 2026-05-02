@@ -3,6 +3,7 @@ import { useFrame, useThree } from '@react-three/fiber';
 import { useKeyboardControls } from '@react-three/drei';
 import * as THREE from 'three';
 import type { SceneMode } from '@/shared/contracts';
+import type { LocalPlayerProfile } from '@/play/playerProfile';
 import { Character } from '@/world/Character';
 import { PLAYER_COLLIDER_RADIUS } from '@/world/airportLayout';
 import { moveCircleWithColliders } from '@/world/physics';
@@ -15,6 +16,7 @@ interface PlayerControllerProps {
   onNearTransitChange: (target: WorldTransitTarget | null) => void;
   onInteract: () => void;
   onTransitInteract: (target: WorldTransitTarget) => void;
+  playerProfile: LocalPlayerProfile;
   conversationFocus?: WorldConversationFocus | null;
 }
 
@@ -30,6 +32,7 @@ export function PlayerController({
   onNearTransitChange,
   onInteract,
   onTransitInteract,
+  playerProfile,
   conversationFocus = null,
 }: PlayerControllerProps) {
   const playerRef = useRef<THREE.Group>(null);
@@ -221,6 +224,7 @@ export function PlayerController({
       blockedZ,
       colliderCount: colliders.length,
     };
+    window.__huskyPlayerProfile = playerProfile;
 
   });
 
@@ -232,7 +236,13 @@ export function PlayerController({
       name="player"
     >
       <group ref={visualRef}>
-        <Character color="#ef4444" pants="#111827" hair="#111827" accessory="backpack" walking={walking} />
+        <Character
+          color={playerProfile.color}
+          pants="#111827"
+          hair="#111827"
+          accessory={playerProfile.accessory}
+          walking={walking}
+        />
       </group>
     </group>
   );
@@ -244,5 +254,6 @@ declare global {
     __huskyCollisionDebug?: { blockedX: boolean; blockedZ: boolean; colliderCount: number };
     __huskyCameraDebug?: { x: number; y: number; z: number; lookX: number; lookY: number; lookZ: number };
     __huskyAvatarDebug?: { x: number; y: number; z: number; scale: number };
+    __huskyPlayerProfile?: LocalPlayerProfile;
   }
 }

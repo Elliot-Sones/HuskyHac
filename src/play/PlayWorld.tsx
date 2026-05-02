@@ -4,6 +4,7 @@ import type { SceneMode } from '@/shared/contracts';
 import { ArrivalTransition } from '@/play/ArrivalTransition';
 import { PlayerEntryMock } from '@/play/PlayerEntryMock';
 import { resolvePlayDestination, type PlayDestination } from '@/play/destinations';
+import { readLocalPlayerProfile, type LocalPlayerProfile } from '@/play/playerProfile';
 import { LessonProvider, useLessonStore } from '@/state/lessonStore';
 import { ConversationPanel } from '@/ui/ConversationPanel';
 import { TransitConversationPanel } from '@/ui/TransitConversationPanel';
@@ -16,12 +17,21 @@ import type { WorldTransitTarget } from '@/world/worldLayout';
 export function PlayWorld() {
   const [searchParams] = useSearchParams();
   const [phase, setPhase] = useState<'entry' | 'arrival' | 'world'>('entry');
+  const [playerProfile, setPlayerProfile] = useState<LocalPlayerProfile>(() => readLocalPlayerProfile());
   const destination = resolvePlayDestination(
     searchParams.get('destination') ?? searchParams.get('country'),
   );
 
   if (phase === 'entry') {
-    return <PlayerEntryMock destination={destination} onLaunch={() => setPhase('arrival')} />;
+    return (
+      <PlayerEntryMock
+        destination={destination}
+        onLaunch={(profile) => {
+          setPlayerProfile(profile);
+          setPhase('arrival');
+        }}
+      />
+    );
   }
 
   if (phase === 'arrival') {
@@ -30,12 +40,18 @@ export function PlayWorld() {
 
   return (
     <LessonProvider key={destination.id} scenario={destination.scenario}>
-      <PlayWorldInner destination={destination} />
+      <PlayWorldInner destination={destination} playerProfile={playerProfile} />
     </LessonProvider>
   );
 }
 
-function PlayWorldInner({ destination }: { destination: PlayDestination }) {
+function PlayWorldInner({
+  destination,
+  playerProfile,
+}: {
+  destination: PlayDestination;
+  playerProfile: LocalPlayerProfile;
+}) {
   const lesson = useLessonStore();
   const [mode, setMode] = useState<SceneMode>('world');
   const [isNearNpc, setIsNearNpc] = useState(false);
@@ -83,6 +99,7 @@ function PlayWorldInner({ destination }: { destination: PlayDestination }) {
         }}
         onTransitInteract={(target) => setActiveTransit(target)}
         conversationFocus={activeTransitFocus}
+        playerProfile={playerProfile}
       />
 
       {mode === 'world' && !activeTransitDialogue && (

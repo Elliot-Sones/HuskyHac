@@ -3,6 +3,7 @@ import type { ComponentType } from 'react';
 import { Canvas } from '@react-three/fiber';
 import { Environment, KeyboardControls, Loader, PerspectiveCamera } from '@react-three/drei';
 import type { ConversationStatus, SceneMode } from '@/shared/contracts';
+import type { LocalPlayerProfile } from '@/play/playerProfile';
 import { PlayerController } from '@/world/PlayerController';
 import type {
   WorldConversationFocus,
@@ -21,6 +22,7 @@ interface WorldCanvasProps {
   onNearTransitChange: (target: WorldTransitTarget | null) => void;
   onInteract: () => void;
   onTransitInteract: (target: WorldTransitTarget) => void;
+  playerProfile: LocalPlayerProfile;
   conversationFocus?: WorldConversationFocus | null;
 }
 
@@ -42,6 +44,7 @@ export function WorldCanvas({
   onNearTransitChange,
   onInteract,
   onTransitInteract,
+  playerProfile,
   conversationFocus = null,
 }: WorldCanvasProps) {
   return (
@@ -89,6 +92,7 @@ export function WorldCanvas({
               onNearTransitChange={onNearTransitChange}
               onInteract={onInteract}
               onTransitInteract={onTransitInteract}
+              playerProfile={playerProfile}
               conversationFocus={conversationFocus}
             />
           </Suspense>
