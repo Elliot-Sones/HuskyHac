@@ -16,7 +16,7 @@ const interactRadius = 3.3;
 const bounds = {
   minX: -15,
   maxX: 13,
-  minZ: -0.4,
+  minZ: -8.5,
   maxZ: 12,
 };
 

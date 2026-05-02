@@ -32,7 +32,7 @@ export function ConversationPanel() {
   }
 
   return (
-    <section className="pointer-events-auto grid max-h-[calc(100vh-2rem)] w-full max-w-6xl grid-cols-1 gap-4 overflow-hidden rounded-[2rem] border border-white/10 bg-slate-950/75 p-4 shadow-2xl shadow-black/45 backdrop-blur-2xl lg:grid-cols-[minmax(0,1fr)_20rem]">
+    <section className="pointer-events-auto grid max-h-[56vh] w-full max-w-6xl grid-cols-1 gap-4 overflow-hidden rounded-[2rem] border border-white/10 bg-slate-950/75 p-4 shadow-2xl shadow-black/45 backdrop-blur-2xl lg:grid-cols-[minmax(0,1fr)_20rem]">
       <div className="min-h-0 rounded-[1.5rem] border border-white/[0.08] bg-white/[0.045]">
         <header className="flex flex-wrap items-center justify-between gap-3 border-b border-white/[0.08] px-4 py-3">
           <div>
@@ -58,7 +58,7 @@ export function ConversationPanel() {
           </div>
         </header>
 
-        <div className="max-h-[39vh] space-y-3 overflow-y-auto px-4 py-4">
+        <div className="max-h-[16vh] space-y-3 overflow-y-auto px-4 py-4">
           {lesson.transcript.map((line) => (
             <TranscriptLine key={line.id} line={line} />
           ))}

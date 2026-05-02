@@ -28,7 +28,7 @@ export function AirportScene({ mode, isNearNpc, conversationStatus }: AirportSce
 
       <TerminalWalls />
       <FloorWayfinding />
-      <InformationDesk talking={talking} isNearNpc={isNearNpc} />
+      <InformationDesk mode={mode} talking={talking} isNearNpc={isNearNpc} />
       <ArrivalBoard />
       <BaggageAndProps />
       <QueueRopes />
@@ -105,9 +105,11 @@ function FloorWayfinding() {
 }
 
 function InformationDesk({
+  mode,
   talking,
   isNearNpc,
 }: {
+  mode: SceneMode;
   talking: boolean;
   isNearNpc: boolean;
 }) {
@@ -157,7 +159,7 @@ function InformationDesk({
         </div>
       </Html>
 
-      {isNearNpc && (
+      {mode === 'world' && isNearNpc && (
         <Html position={[0, 2.2, 0.35]} center distanceFactor={9} style={{ pointerEvents: 'none' }}>
           <div className="airport-interact">
             <span>E</span>

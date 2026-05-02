@@ -36,7 +36,7 @@ export function WorldCanvas({
           shadows
           dpr={[1, 2]}
           camera={{ position: [0, 4.8, 15], fov: 48 }}
-          gl={{ antialias: true, toneMappingExposure: 1.08 }}
+          gl={{ antialias: true, preserveDrawingBuffer: true, toneMappingExposure: 1.08 }}
         >
           <color attach="background" args={['#dfe8f2']} />
           <fog attach="fog" args={['#dfe8f2', 24, 66]} />
