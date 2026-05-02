@@ -1,14 +1,19 @@
 import * as THREE from 'three';
 import type { WorldBounds, WorldCollider } from '@/world/physics';
+import type { WorldLayout, WorldTransitTarget } from '@/world/worldLayout';
 
 export const PLAYER_COLLIDER_RADIUS = 0.42;
 
 export const AIRPORT_NPC_POSITION = new THREE.Vector3(4.7, 0, -4.55);
 
+export type AirportTransitTargetId = 'taxi' | 'bus';
+
+export type AirportTransitTarget = WorldTransitTarget & { id: AirportTransitTargetId };
+
 export const AIRPORT_BOUNDS: WorldBounds = {
   minX: -17,
   maxX: 15,
-  minZ: -20,
+  minZ: -31,
   maxZ: 12,
 };
 
@@ -94,4 +99,70 @@ export const AIRPORT_COLLIDERS: WorldCollider[] = [
     center: { x: 1.6, z: 4.2 },
     halfExtents: { x: 0.34, z: 0.26 },
   },
+  {
+    id: 'outdoor-taxi-left',
+    kind: 'rect',
+    center: { x: -8.0, z: -16.8 },
+    halfExtents: { x: 1.0, z: 0.78 },
+  },
+  {
+    id: 'outdoor-taxi-right',
+    kind: 'rect',
+    center: { x: -1.9, z: -16.8 },
+    halfExtents: { x: 1.0, z: 0.78 },
+  },
+  {
+    id: 'bus-stop-bus',
+    kind: 'rect',
+    center: { x: -9.2, z: -29.2 },
+    halfExtents: { x: 2.0, z: 0.78 },
+  },
+  {
+    id: 'bus-stop-shelter',
+    kind: 'rect',
+    center: { x: -1.9, z: -29.2 },
+    halfExtents: { x: 0.72, z: 0.38 },
+  },
 ];
+
+export const AIRPORT_TRANSIT_TARGETS: AirportTransitTarget[] = [
+  {
+    id: 'taxi',
+    label: 'Taxi stand',
+    actionLabel: 'Enter taxi',
+    locationLabel: 'Curbside pickup',
+    position: { x: -5.2, z: -16.8 },
+    radius: 2.0,
+  },
+  {
+    id: 'bus',
+    label: 'Bus stop',
+    actionLabel: 'Board bus',
+    locationLabel: 'Across the street',
+    position: { x: -5.2, z: -28.5 },
+    radius: 4.0,
+  },
+];
+
+export const airportWorldLayout: WorldLayout = {
+  id: 'airport-france',
+  playerStart: [0, 0, 8.6],
+  playerStartRotation: Math.PI,
+  npcPosition: AIRPORT_NPC_POSITION,
+  bounds: AIRPORT_BOUNDS,
+  colliders: AIRPORT_COLLIDERS,
+  transitTargets: AIRPORT_TRANSIT_TARGETS,
+  camera: {
+    followOffset: new THREE.Vector3(0, 4.7, 7.4),
+    lookOffset: new THREE.Vector3(0, 1.25, -0.6),
+    outdoorFollowOffset: new THREE.Vector3(0, 4.5, 3.4),
+    outdoorLookOffset: new THREE.Vector3(0, 1.15, -0.25),
+    outdoorThresholdZ: -11,
+    conversationCamera: new THREE.Vector3(4.5, 2.45, 2.35),
+    conversationLook: AIRPORT_NPC_POSITION.clone().add(new THREE.Vector3(0, 1.55, 0.2)),
+  },
+  skyColor: '#dfe8f2',
+  fogColor: '#dfe8f2',
+  fogNear: 24,
+  fogFar: 66,
+};

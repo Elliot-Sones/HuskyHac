@@ -1,11 +1,26 @@
 import type { Scenario } from '@/shared/contracts';
+import type { WorldTransitTarget } from '@/world/worldLayout';
 
 interface WorldHudProps {
   scenario: Scenario;
   isNearNpc?: boolean;
+  nearTransit?: WorldTransitTarget | null;
+  selectedTransit?: WorldTransitTarget | null;
 }
 
-export function WorldHud({ scenario, isNearNpc = true }: WorldHudProps) {
+export function WorldHud({
+  scenario,
+  isNearNpc = true,
+  nearTransit = null,
+  selectedTransit = null,
+}: WorldHudProps) {
+  const nearbyName = nearTransit?.label ?? scenario.npc.name;
+  const nearbyLocation = nearTransit?.locationLabel ?? scenario.npc.locationLabel;
+  const eAction = nearTransit ? nearTransit.actionLabel : 'Talk';
+  const centerPrompt = nearTransit
+    ? `Press E to ${nearTransit.actionLabel.toLowerCase()}.`
+    : `Press E to start: ${scenario.goal}`;
+
   return (
     <div className="pointer-events-none absolute inset-0 z-10">
       <header className="flex items-start justify-between gap-4 px-5 pt-5">
@@ -33,7 +48,7 @@ export function WorldHud({ scenario, isNearNpc = true }: WorldHudProps) {
         <div className="pointer-events-auto rounded-3xl border border-white/10 bg-slate-950/70 px-4 py-3 shadow-2xl shadow-black/30 backdrop-blur-2xl">
           <div className="flex flex-wrap items-center gap-3 text-[12px] text-slate-300">
             <Key label="WASD" value="Move" />
-            <Key label="E" value="Talk" active={isNearNpc} />
+            <Key label="E" value={eAction} active={isNearNpc || Boolean(nearTransit)} />
             <Key label="M" value="Mic" />
             <Key label="ESC" value="Leave" />
           </div>
@@ -43,15 +58,27 @@ export function WorldHud({ scenario, isNearNpc = true }: WorldHudProps) {
           <div className="text-[11px] font-bold uppercase tracking-[0.2em] text-slate-400">
             Nearby
           </div>
-          <div className="mt-1 text-[14px] font-bold text-white">{scenario.npc.name}</div>
-          <div className="text-[12px] text-slate-300/70">{scenario.npc.locationLabel}</div>
+          <div className="mt-1 text-[14px] font-bold text-white">{nearbyName}</div>
+          <div className="text-[12px] text-slate-300/70">{nearbyLocation}</div>
         </div>
       </footer>
 
-      {isNearNpc && (
+      {selectedTransit && (
+        <div className="absolute right-5 top-28 max-w-[260px] rounded-3xl border border-emerald-300/35 bg-[#111827]/90 px-4 py-3 text-white shadow-2xl shadow-black/40 backdrop-blur-2xl">
+          <div className="text-[11px] font-black uppercase tracking-[0.22em] text-emerald-200">
+            Transit selected
+          </div>
+          <div className="mt-1 text-[14px] font-black text-white">{selectedTransit.label}</div>
+          <div className="text-[12px] text-slate-300/75">
+            Next scene placeholder: continue the Paris journey.
+          </div>
+        </div>
+      )}
+
+      {(isNearNpc || nearTransit) && (
         <div className="absolute bottom-28 left-1/2 -translate-x-1/2">
           <div className="pointer-events-auto rounded-full border border-emerald-300/35 bg-emerald-300/10 px-4 py-2 text-[12px] font-semibold text-emerald-100 shadow-2xl shadow-emerald-950/30 backdrop-blur-2xl">
-            Press E to start: {scenario.goal}
+            {centerPrompt}
           </div>
         </div>
       )}

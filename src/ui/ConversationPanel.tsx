@@ -10,24 +10,30 @@ const STATUS_COPY = {
   idle: 'Ready',
   connecting: 'Connecting',
   listening: 'Listening',
-  thinking: 'Checking meaning',
+  recording: 'Recording French',
+  transcribing: 'Transcribing',
+  thinking: 'AI thinking',
   speaking: 'Mme. Laurent speaking',
   complete: 'Goal complete',
   error: 'Needs retry',
 } as const;
 
+const BUSY_STATUSES = new Set(['recording', 'transcribing', 'thinking', 'speaking']);
+
 export function ConversationPanel() {
   const lesson = useLessonStore();
   const [draft, setDraft] = useState('');
+  const isBusy = BUSY_STATUSES.has(lesson.status);
 
-  function handleSubmit(event: FormEvent<HTMLFormElement>) {
+  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
+
     if (!draft.trim()) {
-      lesson.toggleListening();
+      await lesson.recordSpeech();
       return;
     }
 
-    lesson.submitFreeform(draft);
+    await lesson.submitFreeform(draft);
     setDraft('');
   }
 
@@ -45,7 +51,7 @@ export function ConversationPanel() {
           <div className="flex items-center gap-2 rounded-full border border-white/10 bg-black/20 px-3 py-2">
             <span
               className={`h-2 w-2 rounded-full ${
-                lesson.status === 'listening'
+                lesson.status === 'recording' || lesson.status === 'listening'
                   ? 'animate-pulse bg-rose-300'
                   : lesson.status === 'complete'
                     ? 'bg-emerald-300'
@@ -58,11 +64,31 @@ export function ConversationPanel() {
           </div>
         </header>
 
-        <div className="max-h-[16vh] space-y-3 overflow-y-auto px-4 py-4">
+        <div className="max-h-[18vh] space-y-3 overflow-y-auto px-4 py-4">
           {lesson.transcript.map((line) => (
             <TranscriptLine key={line.id} line={line} />
           ))}
         </div>
+
+        {(lesson.feedback || lesson.errorMessage) && (
+          <div className="border-t border-white/[0.08] px-4 py-3">
+            {lesson.feedback && (
+              <div className="rounded-2xl border border-emerald-200/15 bg-emerald-300/[0.07] px-3 py-2 text-[12px] leading-relaxed text-emerald-50/85">
+                {lesson.feedback.summary}
+                {lesson.feedback.correction && (
+                  <span className="ml-2 font-semibold text-emerald-100">
+                    Try: {lesson.feedback.correction}
+                  </span>
+                )}
+              </div>
+            )}
+            {lesson.errorMessage && (
+              <div className="mt-2 rounded-2xl border border-rose-200/20 bg-rose-300/[0.08] px-3 py-2 text-[12px] leading-relaxed text-rose-50/90">
+                {lesson.errorMessage}
+              </div>
+            )}
+          </div>
+        )}
 
         <div className="border-t border-white/[0.08] px-4 py-4">
           <div className="mb-3 flex items-center justify-between gap-3">
@@ -71,7 +97,7 @@ export function ConversationPanel() {
                 Suggested replies
               </div>
               <div className="mt-1 text-[12px] text-slate-300/70">
-                Choose a phrase or type your own meaning.
+                Tap a phrase to practice it, or say your own answer.
               </div>
             </div>
             {lesson.lastMatchScore !== null && (
@@ -82,9 +108,12 @@ export function ConversationPanel() {
           </div>
 
           <ResponseOptions
-            options={lesson.currentTurn.responses}
+            options={lesson.currentResponses}
             selectedId={lesson.selectedResponseId}
-            onSelect={lesson.selectResponse}
+            onSelect={(option) => {
+              lesson.selectResponse(option);
+              setDraft(option.french);
+            }}
           />
         </div>
 
@@ -92,21 +121,39 @@ export function ConversationPanel() {
           onSubmit={handleSubmit}
           className="flex flex-col gap-3 border-t border-white/[0.08] px-4 py-4 sm:flex-row sm:items-center"
         >
-          <MicButton status={lesson.status} onToggle={lesson.toggleListening} />
+          <MicButton
+            status={lesson.status}
+            isSupported={lesson.speechInputSupported}
+            onToggle={lesson.toggleListening}
+          />
           <label className="min-w-0 flex-1">
             <span className="sr-only">Custom French response</span>
             <input
               value={draft}
               onChange={(event) => setDraft(event.target.value)}
-              placeholder="Essayez: Merci, ou puis-je acheter un billet ?"
-              className="h-14 w-full rounded-2xl border border-white/10 bg-black/25 px-4 text-[14px] text-white outline-none transition placeholder:text-slate-500 focus:border-emerald-200/50 focus:ring-2 focus:ring-emerald-300/20"
+              disabled={isBusy}
+              placeholder={
+                lesson.speechInputSupported
+                  ? 'Essayez: Merci, ou puis-je acheter un billet ?'
+                  : 'Speech unavailable here. Type your French answer.'
+              }
+              className="h-14 w-full rounded-2xl border border-white/10 bg-black/25 px-4 text-[14px] text-white outline-none transition placeholder:text-slate-500 focus:border-emerald-200/50 focus:ring-2 focus:ring-emerald-300/20 disabled:cursor-not-allowed disabled:text-slate-400"
             />
           </label>
           <button
             type="submit"
-            className="h-14 rounded-2xl bg-white px-5 text-[13px] font-black text-slate-950 shadow-lg shadow-white/10 transition hover:bg-emerald-100"
+            disabled={isBusy}
+            className="h-14 rounded-2xl bg-white px-5 text-[13px] font-black text-slate-950 shadow-lg shadow-white/10 transition hover:bg-emerald-100 disabled:cursor-not-allowed disabled:bg-slate-300 disabled:text-slate-500"
           >
             Say it
+          </button>
+          <button
+            type="button"
+            disabled={!lesson.lastNpcLine || !lesson.speechOutputSupported || isBusy}
+            onClick={() => void lesson.replayLastNpcLine()}
+            className="h-14 rounded-2xl border border-white/10 bg-white/[0.06] px-4 text-[12px] font-bold text-slate-100 transition hover:bg-white/[0.1] disabled:cursor-not-allowed disabled:text-slate-500"
+          >
+            Replay
           </button>
         </form>
       </div>
@@ -135,7 +182,7 @@ export function ConversationPanel() {
           </div>
           <p className="mt-4 text-[12px] leading-relaxed text-slate-300/70">
             Helpful airport staff. She keeps replies short, repeats key transport words, and
-            rewards polite French.
+            rewards polite French. NPC audio is AI-generated.
           </p>
         </aside>
       </div>
