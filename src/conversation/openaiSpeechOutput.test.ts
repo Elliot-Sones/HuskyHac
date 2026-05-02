@@ -10,6 +10,7 @@ describe('createOpenAiSpeechOutput', () => {
 
       expect(body.text).toBe('Bonjour, suivez les panneaux vers la gare.');
       expect(body.lang).toBe('fr-FR');
+      expect(body.languageName).toBe('French');
 
       return new Response(new Blob(['mp3-bytes'], { type: 'audio/mpeg' }), {
         status: 200,
@@ -32,7 +33,7 @@ describe('createOpenAiSpeechOutput', () => {
       },
     });
 
-    await output.speak(line, { lang: 'fr-FR' });
+    await output.speak(line, { lang: 'fr-FR', languageName: 'French' } as any);
 
     expect(fetcher).toHaveBeenCalledWith('/api/openai/tts', expect.any(Object));
     expect(play).toHaveBeenCalledTimes(1);

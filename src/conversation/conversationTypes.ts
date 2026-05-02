@@ -38,6 +38,8 @@ export interface NpcBrain {
 
 export interface SpeechOutputOptions {
   lang?: string;
+  languageName?: string;
+  transcriptionLanguage?: string;
   preferBrowser?: boolean;
 }
 
@@ -54,9 +56,15 @@ export interface SpeechTranscript {
 }
 
 export interface SpeechInput {
-  listen(options?: { lang?: string }): Promise<SpeechTranscript>;
+  listen(options?: SpeechLanguageOptions): Promise<SpeechTranscript>;
   stop(): void;
   isSupported(): boolean;
+}
+
+export interface SpeechLanguageOptions {
+  lang?: string;
+  languageName?: string;
+  transcriptionLanguage?: string;
 }
 
 export interface KeyValueStorage {

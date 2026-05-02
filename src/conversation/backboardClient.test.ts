@@ -2,6 +2,7 @@ import { describe, expect, it, vi } from 'vitest';
 import { airportFranceScenario } from '@/scenarios/airportFrance';
 import { createBackboardNpcBrain } from '@/conversation/backboardClient';
 import type { KeyValueStorage } from '@/conversation/conversationTypes';
+import { resolvePlayDestination } from '@/play/destinations';
 
 class MemoryStorage implements KeyValueStorage {
   private readonly values = new Map<string, string>();
@@ -111,5 +112,42 @@ describe('createBackboardNpcBrain', () => {
         inputSource: 'typed',
       }),
     ).rejects.toThrow('Free credits');
+  });
+
+  it('uses the selected scenario language in the Backboard system prompt', async () => {
+    const spanishScenario = resolvePlayDestination('airport-spain').scenario;
+    const fetcher = vi.fn(async (_url: string | URL, init?: RequestInit) => {
+      const body = JSON.parse(String(init?.body));
+
+      expect(body.system_prompt).toContain('Language: Spanish');
+      expect(body.system_prompt).toContain('Spanish learner');
+      expect(body.system_prompt).not.toContain('Language: French');
+
+      return new Response(
+        JSON.stringify({
+          status: 'COMPLETED',
+          content: JSON.stringify({
+            npcReply: {
+              text: 'Claro.',
+              translation: 'Of course.',
+            },
+            suggestedResponses: [],
+            scene: { complete: false, reason: 'Continue.', score: 0.4 },
+            memoryFacts: [],
+          }),
+        }),
+        { status: 200, headers: { 'Content-Type': 'application/json' } },
+      );
+    });
+
+    const brain = createBackboardNpcBrain({ fetcher, storage: new MemoryStorage() });
+
+    await brain.generateReply({
+      scenario: spanishScenario,
+      turn: spanishScenario.turns[0],
+      transcript: [spanishScenario.turns[0].npcLine],
+      learnerText: 'Quiero ir al centro.',
+      inputSource: 'typed',
+    });
   });
 });

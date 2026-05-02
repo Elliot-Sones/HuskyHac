@@ -9,7 +9,8 @@ describe('createOpenAiSpeechInput', () => {
       const file = form.get('file');
 
       expect(form.get('model')).toBe('gpt-4o-mini-transcribe');
-      expect(form.get('language')).toBe('fr');
+      expect(form.get('language')).toBe('es');
+      expect(form.get('prompt')).toContain('Spanish');
       expect(file).toBeInstanceOf(Blob);
 
       return new Response(JSON.stringify({ text: 'Bonjour, je cherche le RER.' }), {
@@ -33,7 +34,11 @@ describe('createOpenAiSpeechInput', () => {
       maxDurationMs: 1000,
     });
 
-    const transcriptPromise = input.listen({ lang: 'fr-FR' });
+    const transcriptPromise = input.listen({
+      lang: 'es-ES',
+      languageName: 'Spanish',
+      transcriptionLanguage: 'es',
+    } as any);
     await Promise.resolve();
     const recorder = recorders[0];
     if (!recorder) throw new Error('Recorder was not created.');

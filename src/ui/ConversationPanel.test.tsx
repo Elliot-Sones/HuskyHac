@@ -3,6 +3,7 @@ import { act } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { airportFranceScenario } from '@/scenarios/airportFrance';
+import { resolvePlayDestination } from '@/play/destinations';
 import { ConversationPanel } from '@/ui/ConversationPanel';
 import type { LessonStore } from '@/state/lessonStore';
 
@@ -65,6 +66,23 @@ describe('ConversationPanel', () => {
 
     expect(submitResponseOption).toHaveBeenCalledWith(airportFranceScenario.turns[0].responses[1]);
   });
+
+  it('labels recording controls with the selected country language', async () => {
+    const spanishScenario = resolvePlayDestination('airport-spain').scenario;
+    mocks.useLessonStore.mockReturnValue(
+      makeLessonStore({
+        scenario: spanishScenario,
+        currentTurn: spanishScenario.turns[0],
+        currentResponses: spanishScenario.turns[0].responses,
+        lastNpcLine: spanishScenario.turns[0].npcLine,
+      }),
+    );
+
+    await renderConversationPanel();
+
+    expect(getButtonByLabel('Record Spanish answer')).not.toBeNull();
+    expect(container?.textContent).toContain('Custom Spanish response');
+  });
 });
 
 async function renderConversationPanel() {
@@ -121,5 +139,11 @@ async function clickButton(button: HTMLButtonElement | null | undefined) {
 function getButtonByText(text: string) {
   return [...(container?.querySelectorAll<HTMLButtonElement>('button') ?? [])].find((button) =>
     button.textContent?.includes(text),
+  ) ?? null;
+}
+
+function getButtonByLabel(label: string) {
+  return [...(container?.querySelectorAll<HTMLButtonElement>('button') ?? [])].find(
+    (button) => button.getAttribute('aria-label') === label,
   ) ?? null;
 }

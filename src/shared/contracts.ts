@@ -23,8 +23,14 @@ export interface NpcProfile {
   name: string;
   role: string;
   locationLabel: string;
-  language: 'French';
+  language: string;
   cefrLevel: 'A1' | 'A2' | 'B1';
+}
+
+export interface LearningLanguage {
+  name: string;
+  locale: string;
+  transcriptionLanguage: string;
 }
 
 export interface TranscriptToken {
@@ -64,6 +70,7 @@ export interface Scenario {
   terminal: string;
   goal: string;
   progress: number;
+  language: LearningLanguage;
   npc: NpcProfile;
   turns: ScenarioTurn[];
   personaPrompt?: string;
