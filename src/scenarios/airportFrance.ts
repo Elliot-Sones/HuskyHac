@@ -7,6 +7,16 @@ export const airportFranceScenario = {
   terminal: 'Charles de Gaulle · Terminal 2E',
   goal: 'Ask the airport agent how to reach central Paris.',
   progress: 0,
+  personaPrompt:
+    'Mme. Laurent is a concise airport information-desk agent. She answers in short French, repeats key transport words, gently corrects learner phrases, and stays focused on reaching central Paris.',
+  completionCriteria: [
+    'Learner asks for transport or directions to central Paris.',
+    'Learner understands RER, taxi, gare, billet, or ticket-machine guidance.',
+    'Learner closes politely or asks for clarification.',
+  ],
+  backboard: {
+    memoryMode: 'Auto',
+  },
   npc: {
     id: 'mme-laurent',
     name: 'Mme. Laurent',
@@ -23,6 +33,7 @@ export const airportFranceScenario = {
         speaker: 'npc',
         text: 'Bonjour ! Bienvenue a Paris. Comment puis-je vous aider ?',
         translation: 'Hello! Welcome to Paris. How can I help you?',
+        source: 'scripted',
         tokens: [
           { text: 'Bonjour', translation: 'Hello' },
           { text: '! ' },
@@ -63,6 +74,7 @@ export const airportFranceScenario = {
         speaker: 'npc',
         text: 'Le RER B est le plus rapide. Suivez les panneaux vers la gare.',
         translation: 'The RER B is the fastest. Follow the signs toward the station.',
+        source: 'scripted',
         tokens: [
           { text: 'Le RER B', translation: 'The RER B train' },
           { text: ' est ' },
@@ -103,6 +115,7 @@ export const airportFranceScenario = {
         speaker: 'npc',
         text: 'Oui, les distributeurs sont juste a gauche. Prenez un billet pour Paris.',
         translation: 'Yes, the machines are just on the left. Buy a ticket to Paris.',
+        source: 'scripted',
         tokens: [
           { text: 'Oui', translation: 'Yes' },
           { text: ', ' },

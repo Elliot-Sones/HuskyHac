@@ -1,4 +1,4 @@
-import { forwardRef, useRef } from 'react';
+import { forwardRef, type RefObject, useRef } from 'react';
 import { useFrame } from '@react-three/fiber';
 import * as THREE from 'three';
 
@@ -12,8 +12,11 @@ export interface CharacterProps {
   shoeColor?: string;
   walking?: boolean;
   talking?: boolean;
+  walkingRef?: RefObject<boolean>;
+  talkingRef?: RefObject<boolean>;
   idleBob?: boolean;
   stride?: number;
+  strideRef?: RefObject<number>;
   accessory?: CharacterAccessory;
 }
 
@@ -26,8 +29,11 @@ export const Character = forwardRef<THREE.Group, CharacterProps>(function Charac
     shoeColor = '#111827',
     walking = false,
     talking = false,
+    walkingRef,
+    talkingRef,
     idleBob = true,
     stride = 1,
+    strideRef,
     accessory,
   },
   ref,
@@ -43,41 +49,44 @@ export const Character = forwardRef<THREE.Group, CharacterProps>(function Charac
 
   useFrame((state) => {
     const time = state.clock.elapsedTime;
-    const walkPulse = Math.sin(time * 7.5) * stride;
+    const isWalking = walkingRef?.current ?? walking;
+    const isTalking = talkingRef?.current ?? talking;
+    const strideValue = strideRef?.current ?? stride;
+    const walkPulse = Math.sin(time * 7.5) * strideValue;
     const calmPulse = Math.sin(time * 1.8);
 
     if (bodyRef.current) {
-      const bob = walking ? Math.abs(Math.sin(time * 7.5)) * 0.035 : calmPulse * 0.018;
+      const bob = isWalking ? Math.abs(Math.sin(time * 7.5)) * 0.035 : calmPulse * 0.018;
       bodyRef.current.position.y = idleBob ? bob : 0;
     }
 
     if (headRef.current) {
-      headRef.current.rotation.z = walking ? Math.sin(time * 7.5) * 0.035 : calmPulse * 0.025;
+      headRef.current.rotation.z = isWalking ? Math.sin(time * 7.5) * 0.035 : calmPulse * 0.025;
     }
 
     if (leftArmRef.current) {
-      leftArmRef.current.rotation.x = walking ? -walkPulse * 0.55 : calmPulse * 0.045;
+      leftArmRef.current.rotation.x = isWalking ? -walkPulse * 0.55 : calmPulse * 0.045;
     }
 
     if (rightArmRef.current) {
-      rightArmRef.current.rotation.x = walking ? walkPulse * 0.55 : -calmPulse * 0.045;
+      rightArmRef.current.rotation.x = isWalking ? walkPulse * 0.55 : -calmPulse * 0.045;
     }
 
     if (leftLegRef.current) {
-      leftLegRef.current.rotation.x = walking ? walkPulse * 0.42 : 0;
+      leftLegRef.current.rotation.x = isWalking ? walkPulse * 0.42 : 0;
     }
 
     if (rightLegRef.current) {
-      rightLegRef.current.rotation.x = walking ? -walkPulse * 0.42 : 0;
+      rightLegRef.current.rotation.x = isWalking ? -walkPulse * 0.42 : 0;
     }
 
     if (mouthRef.current) {
-      const open = talking ? 1 + Math.abs(Math.sin(time * 14)) * 2.8 : 1;
+      const open = isTalking ? 1 + Math.abs(Math.sin(time * 14)) * 2.8 : 1;
       mouthRef.current.scale.y = open;
     }
 
     if (suitcaseRef.current) {
-      suitcaseRef.current.rotation.x = walking ? -walkPulse * 0.18 : calmPulse * 0.025;
+      suitcaseRef.current.rotation.x = isWalking ? -walkPulse * 0.18 : calmPulse * 0.025;
     }
   });
 

@@ -4,6 +4,8 @@ export type ConversationStatus =
   | 'idle'
   | 'connecting'
   | 'listening'
+  | 'recording'
+  | 'transcribing'
   | 'thinking'
   | 'speaking'
   | 'complete'
@@ -36,6 +38,7 @@ export interface TranscriptLine {
   text: string;
   translation?: string;
   tokens?: TranscriptToken[];
+  source?: 'scripted' | 'typed' | 'speech' | 'suggestion' | 'backboard' | 'fallback' | 'openai';
 }
 
 export interface ResponseOption {
@@ -63,10 +66,85 @@ export interface Scenario {
   progress: number;
   npc: NpcProfile;
   turns: ScenarioTurn[];
+  personaPrompt?: string;
+  completionCriteria?: string[];
+  backboard?: {
+    assistantId?: string;
+    memoryMode?: 'Auto' | 'Readonly' | 'off';
+  };
 }
 
 export interface WorldNpc {
   id: string;
   profile: NpcProfile;
   position: [number, number, number];
+}
+
+export const MULTIPLAYER_MAX_PLAYERS = 4;
+export const MULTIPLAYER_ROOM_CODE_LENGTH = 6;
+export const MULTIPLAYER_ROOM_CODE_PATTERN = /^[A-Z0-9]{6}$/;
+
+export type PlayerAccessory = 'backpack' | 'nametag' | 'scarf' | 'suitcase';
+
+export interface PlayerProfile {
+  id: string;
+  roomId: string;
+  displayName: string;
+  color: string;
+  accessory: PlayerAccessory;
+  connected: boolean;
+}
+
+export interface PlayerProfileInput {
+  playerToken: string;
+  displayName: string;
+  color: string;
+  accessory?: PlayerAccessory;
+}
+
+export interface PlayerSnapshot {
+  playerId: string;
+  sequence: number;
+  sentAt: number;
+  position: { x: number; y: number; z: number };
+  rotationY: number;
+  walking: boolean;
+  running: boolean;
+  mode: SceneMode;
+}
+
+export interface RoomState {
+  id: string;
+  code: string;
+  createdAt: number;
+  maxPlayers: number;
+  players: PlayerProfile[];
+  snapshots: Record<string, PlayerSnapshot>;
+}
+
+export type RoomErrorCode =
+  | 'INVALID_PROFILE'
+  | 'INVALID_ROOM'
+  | 'ROOM_FULL'
+  | 'ROOM_NOT_FOUND'
+  | 'NOT_IN_ROOM'
+  | 'STALE_SNAPSHOT';
+
+export interface RoomError {
+  code: RoomErrorCode;
+  message: string;
+}
+
+export type RoomActionResponse<T> =
+  | { ok: true; data: T }
+  | { ok: false; error: RoomError };
+
+export interface RoomJoinPayload {
+  roomCode: string;
+  profile: PlayerProfileInput;
+}
+
+export interface RoomJoinedPayload {
+  room: RoomState;
+  self: PlayerProfile;
 }

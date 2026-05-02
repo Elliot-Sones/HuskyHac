@@ -191,35 +191,175 @@ function FloorWayfinding() {
 function RearTaxiExterior() {
   return (
     <group>
-      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[-5.2, 0.005, -15.2]}>
-        <planeGeometry args={[12, 8]} />
-        <meshStandardMaterial color="#b9b6ae" roughness={0.86} />
+      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[-5.2, 0.005, -13.7]}>
+        <planeGeometry args={[12, 4.8]} />
+        <meshStandardMaterial color="#c8c3b7" roughness={0.86} />
       </mesh>
-      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[-5.2, 0.02, -16.9]}>
-        <planeGeometry args={[12, 3.8]} />
-        <meshStandardMaterial color="#30343b" roughness={0.72} />
+      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[-5.2, 0.005, -27.5]}>
+        <planeGeometry args={[13.5, 5.4]} />
+        <meshStandardMaterial color="#c8c3b7" roughness={0.88} />
       </mesh>
-      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[-5.2, 0.04, -12.4]}>
+      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[-5.2, 0.018, -21.1]}>
+        <planeGeometry args={[13.5, 10.4]} />
+        <meshStandardMaterial color="#34383f" roughness={0.74} />
+      </mesh>
+      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[-5.2, 0.04, -12.0]}>
         <planeGeometry args={[5.3, 2.6]} />
         <meshStandardMaterial color="#eef5f6" roughness={0.54} />
       </mesh>
-      <mesh castShadow receiveShadow position={[-5.2, 0.18, -14.2]}>
-        <boxGeometry args={[7.6, 0.32, 0.34]} />
+      <mesh castShadow receiveShadow position={[-5.2, 0.18, -14.8]}>
+        <boxGeometry args={[7.8, 0.32, 0.34]} />
+        <meshStandardMaterial color="#e7c84d" roughness={0.58} />
+      </mesh>
+      <mesh castShadow receiveShadow position={[-5.2, 0.18, -24.8]}>
+        <boxGeometry args={[8.6, 0.32, 0.34]} />
         <meshStandardMaterial color="#e7c84d" roughness={0.58} />
       </mesh>
 
-      {[-6.9, -3.3].map((x) => (
+      {[-8.0, -1.9].map((x) => (
         <Taxi key={x} position={[x, 0.02, -16.8]} />
       ))}
 
-      <group position={[-5.2, 1.95, -13.1]} rotation={[0, 0, 0]}>
+      <group position={[-5.2, 1.95, -13.2]}>
         <HangingSign width={5.3} label="TAXI PICKUP" sublabel="Prise en charge taxi" />
       </group>
+      <TransitPrompt position={[-5.2, 1.95, -16.8]} label="Enter taxi" />
 
       {[-7.5, -4.9, -2.3].map((x) => (
-        <mesh key={x} position={[x, 0.055, -16.9]} rotation={[-Math.PI / 2, 0, 0]}>
+        <mesh key={x} position={[x, 0.055, -18.7]} rotation={[-Math.PI / 2, 0, 0]}>
           <planeGeometry args={[2.2, 0.12]} />
           <meshStandardMaterial color="#f8fafc" roughness={0.5} />
+        </mesh>
+      ))}
+
+      {[-23.6, -22.4, -21.2, -20.0, -18.8].map((z) => (
+        <mesh key={z} position={[-5.2, 0.06, z]} rotation={[-Math.PI / 2, 0, 0]}>
+          <planeGeometry args={[3.4, 0.22]} />
+          <meshStandardMaterial color="#f8fafc" roughness={0.46} />
+        </mesh>
+      ))}
+      <Text
+        rotation={[-Math.PI / 2, 0, 0]}
+        position={[-2.4, 0.07, -21.25]}
+        fontSize={0.36}
+        color="#f8fafc"
+        anchorX="center"
+      >
+        BUS →
+      </Text>
+
+      <Bus position={[-9.2, 0.04, -29.2]} />
+      <BusShelter position={[-1.9, 0, -29.2]} />
+      <TransitPrompt position={[-5.2, 1.95, -28.5]} label="Board bus" />
+
+      <group position={[-5.2, 1.95, -26.1]}>
+        <HangingSign width={5.1} label="BUS 350 · PARIS" sublabel="Arret bus · Central Paris" />
+      </group>
+
+      {[-11.2, 0.7].map((x) => (
+        <StreetLight key={x} position={[x, 0, -22.8]} />
+      ))}
+      <CityBackdrop />
+    </group>
+  );
+}
+
+function TransitPrompt({ position, label }: { position: [number, number, number]; label: string }) {
+  return (
+    <Html position={position} center distanceFactor={7} style={{ pointerEvents: 'none' }}>
+      <div className="airport-interact">
+        <span>E</span>
+        {label}
+      </div>
+    </Html>
+  );
+}
+
+function Bus({ position }: { position: [number, number, number] }) {
+  return (
+    <group position={position}>
+      <mesh castShadow position={[0, 0.7, 0]}>
+        <boxGeometry args={[5.1, 1.25, 1.5]} />
+        <meshStandardMaterial color="#2f6edb" roughness={0.44} metalness={0.04} />
+      </mesh>
+      <mesh position={[0, 1.07, -0.78]}>
+        <boxGeometry args={[4.55, 0.42, 0.08]} />
+        <meshStandardMaterial color="#dbeafe" roughness={0.22} metalness={0.04} />
+      </mesh>
+      <mesh position={[-1.75, 1.45, -0.82]}>
+        <boxGeometry args={[1.1, 0.18, 0.08]} />
+        <meshStandardMaterial color="#07111f" emissive="#07111f" emissiveIntensity={0.25} />
+      </mesh>
+      <Text position={[-1.75, 1.46, -0.88]} fontSize={0.16} color="#fde68a" anchorX="center">
+        350 PARIS
+      </Text>
+      {[-1.8, 1.8].map((x) => (
+        <mesh key={x} castShadow position={[x, 0.2, -0.62]} rotation={[Math.PI / 2, 0, 0]}>
+          <cylinderGeometry args={[0.24, 0.24, 0.16, 18]} />
+          <meshStandardMaterial color="#111827" roughness={0.5} />
+        </mesh>
+      ))}
+    </group>
+  );
+}
+
+function BusShelter({ position }: { position: [number, number, number] }) {
+  return (
+    <group position={position} rotation={[0, -0.08, 0]}>
+      <mesh castShadow position={[0, 1.75, 0]}>
+        <boxGeometry args={[1.75, 0.14, 0.88]} />
+        <meshStandardMaterial color="#111827" roughness={0.34} metalness={0.22} />
+      </mesh>
+      <mesh position={[0, 0.96, 0.4]}>
+        <boxGeometry args={[1.55, 1.45, 0.06]} />
+        <meshStandardMaterial color={glass} roughness={0.1} transparent opacity={0.42} />
+      </mesh>
+      <mesh castShadow position={[0, 0.24, -0.18]}>
+        <boxGeometry args={[1.28, 0.22, 0.46]} />
+        <meshStandardMaterial color="#2f3b4a" roughness={0.48} />
+      </mesh>
+      {[-0.74, 0.74].map((x) => (
+        <mesh key={x} castShadow position={[x, 0.85, 0.42]}>
+          <cylinderGeometry args={[0.035, 0.035, 1.65, 8]} />
+          <meshStandardMaterial color={metal} roughness={0.42} metalness={0.24} />
+        </mesh>
+      ))}
+    </group>
+  );
+}
+
+function StreetLight({ position }: { position: [number, number, number] }) {
+  return (
+    <group position={position}>
+      <mesh castShadow position={[0, 1.7, 0]}>
+        <cylinderGeometry args={[0.045, 0.06, 3.4, 10]} />
+        <meshStandardMaterial color="#475569" roughness={0.46} metalness={0.24} />
+      </mesh>
+      <mesh castShadow position={[0.38, 3.35, 0]}>
+        <boxGeometry args={[0.76, 0.08, 0.08]} />
+        <meshStandardMaterial color="#475569" roughness={0.46} metalness={0.24} />
+      </mesh>
+      <pointLight position={[0.78, 3.12, 0]} intensity={0.35} distance={7} color="#fff7d1" />
+      <mesh position={[0.78, 3.12, 0]}>
+        <sphereGeometry args={[0.13, 12, 8]} />
+        <meshStandardMaterial color="#fff7d1" emissive="#fff7d1" emissiveIntensity={0.7} />
+      </mesh>
+    </group>
+  );
+}
+
+function CityBackdrop() {
+  return (
+    <group position={[-5.2, 0, -37]}>
+      {[
+        [-5.5, 0.85, 1.6],
+        [-2.8, 1.2, 1.9],
+        [0.1, 1.05, 1.35],
+        [2.5, 1.35, 1.7],
+      ].map(([x, height, width]) => (
+        <mesh key={x} position={[x, height / 2, 0]}>
+          <boxGeometry args={[width, height, 0.55]} />
+          <meshStandardMaterial color="#cbd5df" roughness={0.86} />
         </mesh>
       ))}
     </group>

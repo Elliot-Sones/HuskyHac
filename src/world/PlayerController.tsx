@@ -4,59 +4,92 @@ import { useKeyboardControls } from '@react-three/drei';
 import * as THREE from 'three';
 import type { SceneMode } from '@/shared/contracts';
 import { Character } from '@/world/Character';
-import {
-  AIRPORT_BOUNDS,
-  AIRPORT_COLLIDERS,
-  AIRPORT_NPC_POSITION,
-  PLAYER_COLLIDER_RADIUS,
-} from '@/world/airportLayout';
+import { PLAYER_COLLIDER_RADIUS } from '@/world/airportLayout';
 import { moveCircleWithColliders } from '@/world/physics';
+import type { WorldLayout, WorldTransitTarget } from '@/world/worldLayout';
 
 interface PlayerControllerProps {
   mode: SceneMode;
+  layout: WorldLayout;
   onNearNpcChange: (near: boolean) => void;
+  onNearTransitChange: (target: WorldTransitTarget | null) => void;
   onInteract: () => void;
+  onTransitInteract: (target: WorldTransitTarget) => void;
 }
 
 const interactRadius = 3.3;
 
-export function PlayerController({ mode, onNearNpcChange, onInteract }: PlayerControllerProps) {
+export function PlayerController({
+  mode,
+  layout,
+  onNearNpcChange,
+  onNearTransitChange,
+  onInteract,
+  onTransitInteract,
+}: PlayerControllerProps) {
   const playerRef = useRef<THREE.Group>(null);
   const visualRef = useRef<THREE.Group>(null);
   const velocity = useRef(new THREE.Vector3());
-  const targetRotation = useRef(Math.PI);
+  const targetRotation = useRef(layout.playerStartRotation);
   const lastNear = useRef(false);
+  const lastTransit = useRef<WorldTransitTarget | null>(null);
+  const walkingState = useRef(false);
   const [walking, setWalking] = useState(false);
   const [, getKeys] = useKeyboardControls();
   const { camera } = useThree();
+  const layoutRef = useRef(layout);
 
-  const followOffset = useMemo(() => new THREE.Vector3(0, 4.7, 7.4), []);
-  const lookOffset = useMemo(() => new THREE.Vector3(0, 1.25, -0.6), []);
-  const outdoorFollowOffset = useMemo(() => new THREE.Vector3(0, 4.5, 3.4), []);
-  const outdoorLookOffset = useMemo(() => new THREE.Vector3(0, 1.15, -0.25), []);
-  const conversationCamera = useMemo(() => new THREE.Vector3(4.5, 2.45, 2.35), []);
-  const conversationLook = useMemo(() => AIRPORT_NPC_POSITION.clone().add(new THREE.Vector3(0, 1.55, 0.2)), []);
+  const conversationFallbackLook = useMemo(() => new THREE.Vector3(0, 1.55, 0.2), []);
+
+  useEffect(() => {
+    layoutRef.current = layout;
+  }, [layout]);
+
+  useEffect(() => {
+    lastNear.current = false;
+    lastTransit.current = null;
+    velocity.current.set(0, 0, 0);
+    targetRotation.current = layout.playerStartRotation;
+    onNearNpcChange(false);
+    onNearTransitChange(null);
+  }, [layout.id, layout.playerStartRotation, onNearNpcChange, onNearTransitChange]);
 
   useEffect(() => {
     function handleKeyDown(event: KeyboardEvent) {
       if (event.key.toLowerCase() === 'e' && lastNear.current && mode === 'world') {
         onInteract();
+      } else if (event.key.toLowerCase() === 'e' && lastTransit.current && mode === 'world') {
+        onTransitInteract(lastTransit.current);
       }
     }
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [mode, onInteract]);
+  }, [mode, onInteract, onTransitInteract]);
+
+  function setWalkingIfChanged(nextWalking: boolean) {
+    if (walkingState.current === nextWalking) return;
+    walkingState.current = nextWalking;
+    setWalking(nextWalking);
+  }
 
   useFrame((_state, delta) => {
     const player = playerRef.current;
     if (!player) return;
+    const activeLayout = layoutRef.current;
+    const {
+      camera: cameraRig,
+      npcPosition,
+      colliders,
+      bounds,
+      transitTargets,
+    } = activeLayout;
 
     if (mode !== 'world') {
       velocity.current.multiplyScalar(0.75);
-      setWalking(false);
-      camera.position.lerp(conversationCamera, 0.08);
-      camera.lookAt(conversationLook);
+      setWalkingIfChanged(false);
+      camera.position.lerp(cameraRig.conversationCamera ?? cameraRig.followOffset, 0.08);
+      camera.lookAt(cameraRig.conversationLook ?? npcPosition.clone().add(conversationFallbackLook));
       return;
     }
 
@@ -83,8 +116,8 @@ export function PlayerController({ mode, onNearNpcChange, onInteract }: PlayerCo
       currentPosition,
       desiredDelta,
       PLAYER_COLLIDER_RADIUS,
-      AIRPORT_COLLIDERS,
-      AIRPORT_BOUNDS,
+      colliders,
+      bounds,
     );
     const blockedX = Math.abs(nextPosition.x - (currentPosition.x + desiredDelta.x)) > 0.001;
     const blockedZ = Math.abs(nextPosition.z - (currentPosition.z + desiredDelta.z)) > 0.001;
@@ -99,17 +132,32 @@ export function PlayerController({ mode, onNearNpcChange, onInteract }: PlayerCo
       visualRef.current.rotation.z = Math.sin(_state.clock.elapsedTime * 8) * (moving ? 0.025 : 0);
     }
 
-    setWalking(moving);
+    setWalkingIfChanged(moving);
 
-    const near = player.position.distanceTo(AIRPORT_NPC_POSITION) < interactRadius;
+    const near = player.position.distanceTo(npcPosition) < interactRadius;
     if (near !== lastNear.current) {
       lastNear.current = near;
       onNearNpcChange(near);
     }
 
-    const outsideTerminal = player.position.z < -11;
-    const targetCam = player.position.clone().add(outsideTerminal ? outdoorFollowOffset : followOffset);
-    const lookAt = player.position.clone().add(outsideTerminal ? outdoorLookOffset : lookOffset);
+    const nearestTransit =
+      transitTargets.find(
+        (target) =>
+          Math.hypot(player.position.x - target.position.x, player.position.z - target.position.z) <
+          target.radius,
+      ) ?? null;
+    if (nearestTransit?.id !== lastTransit.current?.id) {
+      lastTransit.current = nearestTransit;
+      onNearTransitChange(nearestTransit);
+    }
+
+    const outsideTerminal = player.position.z < (cameraRig.outdoorThresholdZ ?? Number.NEGATIVE_INFINITY);
+    const targetCam = player.position
+      .clone()
+      .add(outsideTerminal ? cameraRig.outdoorFollowOffset ?? cameraRig.followOffset : cameraRig.followOffset);
+    const lookAt = player.position
+      .clone()
+      .add(outsideTerminal ? cameraRig.outdoorLookOffset ?? cameraRig.lookOffset : cameraRig.lookOffset);
     camera.position.lerp(targetCam, 0.08);
     camera.lookAt(lookAt);
 
@@ -121,12 +169,18 @@ export function PlayerController({ mode, onNearNpcChange, onInteract }: PlayerCo
     window.__huskyCollisionDebug = {
       blockedX,
       blockedZ,
-      colliderCount: AIRPORT_COLLIDERS.length,
+      colliderCount: colliders.length,
     };
+
   });
 
   return (
-    <group ref={playerRef} position={[0, 0, 8.6]} rotation={[0, Math.PI, 0]} name="player">
+    <group
+      ref={playerRef}
+      position={layout.playerStart}
+      rotation={[0, layout.playerStartRotation, 0]}
+      name="player"
+    >
       <group ref={visualRef}>
         <Character color="#ef4444" pants="#111827" hair="#111827" accessory="backpack" walking={walking} />
       </group>

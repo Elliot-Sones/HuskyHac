@@ -2,9 +2,24 @@ import {
   createContext,
   type PropsWithChildren,
   useContext,
+  useEffect,
   useMemo,
   useReducer,
+  useRef,
 } from 'react';
+import {
+  createDefaultSpeechInput,
+  createDefaultNpcBrain,
+  createDefaultSpeechOutput,
+  createLearnerTranscriptLine,
+  runNpcConversationTurn,
+  type LearnerInputSource,
+  type NpcBrain,
+  type NpcTurnFlowResult,
+  type SpeechInput,
+  type SpeechOutput,
+  type SpeechTranscript,
+} from '@/conversation';
 import type {
   ConversationStatus,
   ResponseOption,
@@ -16,8 +31,10 @@ import { matchResponseVariant } from '@/scenarios/responseMatching';
 
 type LessonAction =
   | { type: 'select-response'; response: ResponseOption }
-  | { type: 'submit-freeform'; text: string }
-  | { type: 'toggle-listening' }
+  | { type: 'append-player-line'; line: ScenarioTranscriptLine }
+  | { type: 'apply-npc-result'; result: NpcTurnFlowResult }
+  | { type: 'set-error'; message: string }
+  | { type: 'set-capabilities'; speechInputSupported: boolean; speechOutputSupported: boolean }
   | { type: 'set-status'; status: ConversationStatus }
   | { type: 'reset' };
 
@@ -29,15 +46,30 @@ export interface LessonState {
   selectedResponseId: string | null;
   lastMatchScore: number | null;
   goalProgress: number;
+  dynamicResponses: ResponseOption[] | null;
+  feedback: NpcTurnFlowResult['feedback'] | null;
+  errorMessage: string | null;
+  speechInputSupported: boolean;
+  speechOutputSupported: boolean;
+  lastNpcLine: ScenarioTranscriptLine | null;
 }
 
 export interface LessonStore extends LessonState {
   currentTurn: Scenario['turns'][number];
+  currentResponses: ResponseOption[];
   selectResponse: (response: ResponseOption) => void;
-  submitFreeform: (text: string) => void;
+  submitFreeform: (text: string, source?: LearnerInputSource) => Promise<void>;
+  recordSpeech: () => Promise<SpeechTranscript | null>;
+  replayLastNpcLine: () => Promise<void>;
   toggleListening: () => void;
   setStatus: (status: ConversationStatus) => void;
   reset: () => void;
+}
+
+interface LessonServices {
+  brain?: NpcBrain;
+  speechInput?: SpeechInput;
+  speechOutput?: SpeechOutput;
 }
 
 const LessonStoreContext = createContext<LessonStore | null>(null);
@@ -45,21 +77,152 @@ const LessonStoreContext = createContext<LessonStore | null>(null);
 export function LessonProvider({
   children,
   scenario = airportFranceScenario,
-}: PropsWithChildren<{ scenario?: Scenario }>) {
+  services,
+}: PropsWithChildren<{ scenario?: Scenario; services?: LessonServices }>) {
   const [state, dispatch] = useReducer(lessonReducer, scenario, createInitialState);
   const currentTurn = state.scenario.turns[state.turnIndex] ?? state.scenario.turns[0];
+  const stateRef = useRef(state);
+  const resolvedServices = useMemo(
+    () => ({
+      brain: services?.brain ?? createDefaultNpcBrain(),
+      speechInput: services?.speechInput ?? createDefaultSpeechInput(),
+      speechOutput: services?.speechOutput ?? createDefaultSpeechOutput(),
+    }),
+    [services],
+  );
+
+  useEffect(() => {
+    stateRef.current = state;
+  }, [state]);
+
+  useEffect(() => {
+    dispatch({
+      type: 'set-capabilities',
+      speechInputSupported: resolvedServices.speechInput.isSupported(),
+      speechOutputSupported: resolvedServices.speechOutput.isSupported(),
+    });
+  }, [resolvedServices.speechInput, resolvedServices.speechOutput]);
+
+  const submitLearnerText = useMemo(
+    () =>
+      async (text: string, source: LearnerInputSource = 'typed') => {
+        const learnerText = text.trim();
+
+        if (!learnerText) {
+          return;
+        }
+
+        const snapshot = stateRef.current;
+        const playerLine = createLearnerTranscriptLine(learnerText, source);
+        dispatch({ type: 'append-player-line', line: playerLine });
+        dispatch({ type: 'set-status', status: 'thinking' });
+
+        try {
+          const result = await runNpcConversationTurn({
+            scenario: snapshot.scenario,
+            turnIndex: snapshot.turnIndex,
+            transcript: snapshot.transcript,
+            learnerText,
+            inputSource: source,
+            brain: resolvedServices.brain,
+            speechOutput: {
+              ...resolvedServices.speechOutput,
+              async speak(line, options) {
+                dispatch({ type: 'set-status', status: 'speaking' });
+                await resolvedServices.speechOutput.speak(line, options);
+              },
+            },
+            playerLine,
+          });
+
+          dispatch({ type: 'apply-npc-result', result });
+        } catch (error) {
+          dispatch({
+            type: 'set-error',
+            message: error instanceof Error ? error.message : 'The NPC reply failed.',
+          });
+        }
+      },
+    [resolvedServices],
+  );
+
+  const recordSpeech = useMemo(
+    () => async () => {
+      const snapshot = stateRef.current;
+
+      if (snapshot.status === 'recording') {
+        resolvedServices.speechInput.stop();
+        dispatch({ type: 'set-status', status: 'idle' });
+        return null;
+      }
+
+      if (!resolvedServices.speechInput.isSupported()) {
+        dispatch({
+          type: 'set-error',
+          message: 'Microphone recording is unavailable here. Type your French answer instead.',
+        });
+        return null;
+      }
+
+      dispatch({ type: 'set-status', status: 'recording' });
+
+      try {
+        const transcript = await resolvedServices.speechInput.listen({ lang: 'fr-FR' });
+        dispatch({ type: 'set-status', status: 'transcribing' });
+        await submitLearnerText(transcript.text, 'speech');
+        return transcript;
+      } catch (error) {
+        dispatch({
+          type: 'set-error',
+          message: error instanceof Error ? error.message : 'Recording failed.',
+        });
+        return null;
+      }
+    },
+    [resolvedServices.speechInput, submitLearnerText],
+  );
+
+  const replayLastNpcLine = useMemo(
+    () => async () => {
+      const line = stateRef.current.lastNpcLine;
+
+      if (!line) {
+        return;
+      }
+
+      dispatch({ type: 'set-status', status: 'speaking' });
+      try {
+        await resolvedServices.speechOutput.speak(line, { lang: 'fr-FR' });
+        dispatch({
+          type: 'set-status',
+          status: stateRef.current.status === 'complete' ? 'complete' : 'idle',
+        });
+      } catch (error) {
+        dispatch({
+          type: 'set-error',
+          message: error instanceof Error ? error.message : 'Replay failed.',
+        });
+      }
+    },
+    [resolvedServices.speechOutput],
+  );
 
   const store = useMemo<LessonStore>(
     () => ({
       ...state,
       currentTurn,
+      currentResponses: state.dynamicResponses ?? currentTurn.responses,
       selectResponse: (response) => dispatch({ type: 'select-response', response }),
-      submitFreeform: (text) => dispatch({ type: 'submit-freeform', text }),
-      toggleListening: () => dispatch({ type: 'toggle-listening' }),
+      submitFreeform: submitLearnerText,
+      recordSpeech,
+      replayLastNpcLine,
+      toggleListening: () => {
+        void recordSpeech();
+      },
       setStatus: (status) => dispatch({ type: 'set-status', status }),
       reset: () => dispatch({ type: 'reset' }),
     }),
-    [currentTurn, state],
+    [currentTurn, recordSpeech, replayLastNpcLine, state, submitLearnerText],
   );
 
   return <LessonStoreContext.Provider value={store}>{children}</LessonStoreContext.Provider>;
@@ -80,32 +243,69 @@ function createInitialState(scenario: Scenario): LessonState {
     scenario,
     turnIndex: 0,
     transcript: [scenario.turns[0].npcLine],
-    status: 'speaking',
+    status: 'idle',
     selectedResponseId: null,
     lastMatchScore: null,
     goalProgress: scenario.progress,
+    dynamicResponses: null,
+    feedback: null,
+    errorMessage: null,
+    speechInputSupported: false,
+    speechOutputSupported: false,
+    lastNpcLine: scenario.turns[0].npcLine,
   };
 }
 
 function lessonReducer(state: LessonState, action: LessonAction): LessonState {
   switch (action.type) {
     case 'select-response':
-      return applyPlayerResponse(state, action.response, 1);
-    case 'submit-freeform': {
-      const match = matchResponseVariant(action.text, state.scenario.turns[state.turnIndex]);
-      const fallbackResponse: ResponseOption = {
-        id: `freeform-${state.transcript.length}`,
-        label: 'natural',
-        french: action.text,
-        english: match.option?.english ?? 'Custom response',
-      };
-
-      return applyPlayerResponse(state, match.option ?? fallbackResponse, match.score);
-    }
-    case 'toggle-listening':
       return {
         ...state,
-        status: state.status === 'listening' ? 'idle' : 'listening',
+        selectedResponseId: action.response.id,
+        errorMessage: null,
+      };
+    case 'append-player-line': {
+      const match = matchResponseVariant(action.line.text, state.scenario.turns[state.turnIndex]);
+
+      return {
+        ...state,
+        transcript: [...state.transcript, action.line],
+        lastMatchScore: match.score,
+        status: 'thinking',
+        errorMessage: null,
+      };
+    }
+    case 'apply-npc-result': {
+      const nextTurnIndex = action.result.complete
+        ? state.turnIndex
+        : Math.min(state.turnIndex + 1, state.scenario.turns.length - 1);
+
+      return {
+        ...state,
+        turnIndex: nextTurnIndex,
+        transcript: [...state.transcript, action.result.npcLine],
+        status: action.result.complete ? 'complete' : 'idle',
+        selectedResponseId: null,
+        goalProgress: action.result.progress,
+        dynamicResponses: action.result.suggestedResponses.length
+          ? action.result.suggestedResponses
+          : null,
+        feedback: action.result.feedback ?? null,
+        errorMessage: action.result.speechError ?? null,
+        lastNpcLine: action.result.npcLine,
+      };
+    }
+    case 'set-error':
+      return {
+        ...state,
+        status: 'error',
+        errorMessage: action.message,
+      };
+    case 'set-capabilities':
+      return {
+        ...state,
+        speechInputSupported: action.speechInputSupported,
+        speechOutputSupported: action.speechOutputSupported,
       };
     case 'set-status':
       return {
@@ -117,36 +317,4 @@ function lessonReducer(state: LessonState, action: LessonAction): LessonState {
     default:
       return state;
   }
-}
-
-function applyPlayerResponse(
-  state: LessonState,
-  response: ResponseOption,
-  matchScore: number,
-): LessonState {
-  const nextTurnIndex = Math.min(state.turnIndex + 1, state.scenario.turns.length - 1);
-  const isComplete = state.turnIndex >= state.scenario.turns.length - 1;
-  const progress = Math.round(((state.turnIndex + 1) / state.scenario.turns.length) * 100);
-  const playerLine: ScenarioTranscriptLine = {
-    id: `player-${response.id}-${state.transcript.length}`,
-    speaker: 'player',
-    text: response.french,
-    translation: response.english,
-  };
-
-  const nextTranscript = [...state.transcript, playerLine];
-
-  if (!isComplete) {
-    nextTranscript.push(state.scenario.turns[nextTurnIndex].npcLine);
-  }
-
-  return {
-    ...state,
-    turnIndex: nextTurnIndex,
-    transcript: nextTranscript,
-    status: isComplete ? 'complete' : 'speaking',
-    selectedResponseId: response.id,
-    lastMatchScore: matchScore,
-    goalProgress: progress,
-  };
 }

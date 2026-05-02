@@ -3,6 +3,7 @@ import {
   AIRPORT_BOUNDS,
   AIRPORT_COLLIDERS,
   AIRPORT_NPC_POSITION,
+  AIRPORT_TRANSIT_TARGETS,
   PLAYER_COLLIDER_RADIUS,
 } from '@/world/airportLayout';
 import { moveCircleWithColliders, pointInsideCollider } from '@/world/physics';
@@ -70,5 +71,56 @@ describe('airport physical layout', () => {
 
     expect(blockedByBackWall.z).toBeGreaterThan(-10.2);
     expect(throughRearTaxiDoor.z).toBeLessThan(-11.2);
+  });
+
+  it('treats the outdoor taxi and bus objects as normal physical obstacles', () => {
+    expect(AIRPORT_COLLIDERS.map((collider) => collider.id)).toEqual(
+      expect.arrayContaining([
+        'outdoor-taxi-left',
+        'outdoor-taxi-right',
+        'bus-stop-bus',
+        'bus-stop-shelter',
+      ]),
+    );
+  });
+
+  it('lets the player cross the street to the bus stop while parked vehicles block shortcuts', () => {
+    const openCrosswalk = moveCircleWithColliders(
+      { x: -5.2, z: -17.2 },
+      { x: 0, z: -9.4 },
+      PLAYER_COLLIDER_RADIUS,
+      AIRPORT_COLLIDERS,
+      AIRPORT_BOUNDS,
+    );
+    const blockedByTaxi = moveCircleWithColliders(
+      { x: -5.2, z: -16.8 },
+      { x: -2.2, z: 0 },
+      PLAYER_COLLIDER_RADIUS,
+      AIRPORT_COLLIDERS,
+      AIRPORT_BOUNDS,
+    );
+    const blockedByBus = moveCircleWithColliders(
+      { x: -6.2, z: -29.2 },
+      { x: -4.4, z: 0 },
+      PLAYER_COLLIDER_RADIUS,
+      AIRPORT_COLLIDERS,
+      AIRPORT_BOUNDS,
+    );
+
+    expect(openCrosswalk.z).toBeLessThan(-25.5);
+    expect(blockedByTaxi.x).toBeGreaterThan(-6.7);
+    expect(blockedByBus.x).toBeGreaterThan(-6.8);
+  });
+
+  it('places taxi and bus interaction targets in reachable outdoor spaces', () => {
+    expect(AIRPORT_TRANSIT_TARGETS.map((target) => target.id)).toEqual(['taxi', 'bus']);
+
+    for (const target of AIRPORT_TRANSIT_TARGETS) {
+      expect(
+        AIRPORT_COLLIDERS.some((collider) =>
+          pointInsideCollider(target.position, collider, PLAYER_COLLIDER_RADIUS),
+        ),
+      ).toBe(false);
+    }
   });
 });

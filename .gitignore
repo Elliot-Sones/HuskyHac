@@ -1,10 +1,14 @@
 node_modules
 dist
+dist-server
 dist-ssr
 .vite
+test-results
 *.tsbuildinfo
 vite.config.js
 vite.config.d.ts
+playwright.config.js
+playwright.config.d.ts
 .env
 .env.local
 .DS_Store

@@ -1,16 +1,21 @@
 import { Suspense } from 'react';
+import type { ComponentType } from 'react';
 import { Canvas } from '@react-three/fiber';
 import { Environment, KeyboardControls, Loader, PerspectiveCamera } from '@react-three/drei';
 import type { ConversationStatus, SceneMode } from '@/shared/contracts';
-import { AirportScene } from '@/world/AirportScene';
 import { PlayerController } from '@/world/PlayerController';
+import type { WorldLayout, WorldSceneProps, WorldTransitTarget } from '@/world/worldLayout';
 
 interface WorldCanvasProps {
   mode: SceneMode;
+  layout: WorldLayout;
+  Scene: ComponentType<WorldSceneProps>;
   isNearNpc: boolean;
   conversationStatus: ConversationStatus;
   onNearNpcChange: (near: boolean) => void;
+  onNearTransitChange: (target: WorldTransitTarget | null) => void;
   onInteract: () => void;
+  onTransitInteract: (target: WorldTransitTarget) => void;
 }
 
 const keyMap = [
@@ -23,10 +28,14 @@ const keyMap = [
 
 export function WorldCanvas({
   mode,
+  layout,
+  Scene,
   isNearNpc,
   conversationStatus,
   onNearNpcChange,
+  onNearTransitChange,
   onInteract,
+  onTransitInteract,
 }: WorldCanvasProps) {
   return (
     <div data-testid="world-canvas-host" className="absolute inset-0">
@@ -38,8 +47,8 @@ export function WorldCanvas({
           camera={{ position: [0, 4.8, 15], fov: 48 }}
           gl={{ antialias: true, preserveDrawingBuffer: true, toneMappingExposure: 1.08 }}
         >
-          <color attach="background" args={['#dfe8f2']} />
-          <fog attach="fog" args={['#dfe8f2', 24, 66]} />
+          <color attach="background" args={[layout.skyColor]} />
+          <fog attach="fog" args={[layout.fogColor, layout.fogNear, layout.fogFar]} />
           <PerspectiveCamera makeDefault position={[0, 4.8, 15]} fov={48} />
 
           <ambientLight intensity={0.58} />
@@ -60,15 +69,19 @@ export function WorldCanvas({
           </Suspense>
 
           <Suspense fallback={null}>
-            <AirportScene
+            <Scene
               mode={mode}
               isNearNpc={isNearNpc}
               conversationStatus={conversationStatus}
             />
             <PlayerController
+              key={layout.id}
               mode={mode}
+              layout={layout}
               onNearNpcChange={onNearNpcChange}
+              onNearTransitChange={onNearTransitChange}
               onInteract={onInteract}
+              onTransitInteract={onTransitInteract}
             />
           </Suspense>
         </Canvas>

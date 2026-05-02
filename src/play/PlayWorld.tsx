@@ -1,26 +1,53 @@
 import { useEffect, useState } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import type { SceneMode } from '@/shared/contracts';
-import { airportFranceScenario } from '@/scenarios/airportFrance';
+import { ArrivalTransition } from '@/play/ArrivalTransition';
+import { PlayerEntryMock } from '@/play/PlayerEntryMock';
+import { resolvePlayDestination, type PlayDestination } from '@/play/destinations';
 import { LessonProvider, useLessonStore } from '@/state/lessonStore';
 import { ConversationPanel } from '@/ui/ConversationPanel';
+import { TransitConversationPanel } from '@/ui/TransitConversationPanel';
 import { WorldHud } from '@/ui/WorldHud';
 import { WorldCanvas } from '@/world/WorldCanvas';
+import { getTransitDialogue } from '@/world/transitDialogues';
+import type { WorldTransitTarget } from '@/world/worldLayout';
 
 export function PlayWorld() {
+  const [searchParams] = useSearchParams();
+  const [phase, setPhase] = useState<'entry' | 'arrival' | 'world'>('entry');
+  const destination = resolvePlayDestination(
+    searchParams.get('destination') ?? searchParams.get('country'),
+  );
+
+  if (phase === 'entry') {
+    return <PlayerEntryMock destination={destination} onLaunch={() => setPhase('arrival')} />;
+  }
+
+  if (phase === 'arrival') {
+    return <ArrivalTransition destination={destination} onComplete={() => setPhase('world')} />;
+  }
+
   return (
-    <LessonProvider scenario={airportFranceScenario}>
-      <PlayWorldInner />
+    <LessonProvider key={destination.id} scenario={destination.scenario}>
+      <PlayWorldInner destination={destination} />
     </LessonProvider>
   );
 }
 
-function PlayWorldInner() {
+function PlayWorldInner({ destination }: { destination: PlayDestination }) {
   const lesson = useLessonStore();
   const [mode, setMode] = useState<SceneMode>('world');
   const [isNearNpc, setIsNearNpc] = useState(false);
+  const [nearTransit, setNearTransit] = useState<WorldTransitTarget | null>(null);
+  const [activeTransit, setActiveTransit] = useState<WorldTransitTarget | null>(null);
+  const activeTransitDialogue = activeTransit ? getTransitDialogue(activeTransit.id) : null;
 
   useEffect(() => {
     function handleKeyDown(event: KeyboardEvent) {
+      if (event.key === 'Escape' && activeTransit) {
+        setActiveTransit(null);
+        return;
+      }
       if (event.key === 'Escape' && mode === 'conversation') {
         setMode('world');
       }
@@ -31,22 +58,40 @@ function PlayWorldInner() {
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [lesson, mode]);
+  }, [activeTransit, lesson, mode]);
 
   return (
     <div className="relative h-screen w-screen overflow-hidden bg-slate-200 text-white">
       <WorldCanvas
         mode={mode}
+        layout={destination.layout}
+        Scene={destination.Scene}
         isNearNpc={isNearNpc}
         conversationStatus={lesson.status}
         onNearNpcChange={setIsNearNpc}
+        onNearTransitChange={setNearTransit}
         onInteract={() => {
-          lesson.setStatus('speaking');
+          setActiveTransit(null);
           setMode('conversation');
+          void lesson.replayLastNpcLine();
         }}
+        onTransitInteract={(target) => setActiveTransit(target)}
       />
 
-      {mode === 'world' && <WorldHud scenario={airportFranceScenario} isNearNpc={isNearNpc} />}
+      {mode === 'world' && (
+        <WorldHud
+          scenario={lesson.scenario}
+          isNearNpc={isNearNpc}
+          nearTransit={nearTransit}
+        />
+      )}
+
+      {mode === 'world' && activeTransitDialogue && (
+        <TransitConversationPanel
+          dialogue={activeTransitDialogue}
+          onClose={() => setActiveTransit(null)}
+        />
+      )}
 
       {mode === 'conversation' && (
         <div className="pointer-events-none absolute inset-0 z-20">
@@ -57,7 +102,7 @@ function PlayWorldInner() {
                 Live roleplay
               </div>
               <div className="mt-1 text-[15px] font-black text-white">
-                Mme. Laurent · Airport information
+                {lesson.scenario.npc.name} · {lesson.scenario.npc.role}
               </div>
             </div>
             <button
@@ -81,7 +126,7 @@ function PlayWorldInner() {
       {lesson.status === 'complete' && (
         <div className="pointer-events-none absolute right-6 top-28 z-30 rotate-[-3deg] rounded-2xl border-2 border-emerald-200/70 bg-emerald-400/15 px-5 py-4 text-emerald-50 shadow-2xl shadow-emerald-950/30 backdrop-blur-2xl">
           <div className="text-[11px] font-black uppercase tracking-[0.24em]">Scene complete</div>
-          <div className="mt-1 text-[18px] font-black">Paris directions unlocked</div>
+          <div className="mt-1 text-[18px] font-black">{lesson.scenario.destination} unlocked</div>
         </div>
       )}
     </div>
