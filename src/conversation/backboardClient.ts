@@ -5,6 +5,7 @@ import type {
   NpcBrainReply,
   NpcBrainRequest,
 } from '@/conversation/conversationTypes';
+import { scenarioLanguage } from '@/scenarios/languageProfiles';
 
 type FetchLike = (input: string | URL, init?: RequestInit) => Promise<Response>;
 
@@ -78,11 +79,13 @@ export function createBackboardNpcBrain({
 }
 
 function buildSystemPrompt(scenario: Scenario) {
+  const language = scenarioLanguage(scenario);
+
   return [
     `You are ${scenario.npc.name}, ${scenario.npc.role}.`,
     `Roleplay only as the NPC in ${scenario.destination}.`,
-    'Language: French. Reply in French first, with a short English translation in JSON.',
-    'The learner is an English-speaking French learner. Keep French short, realistic, and kind.',
+    `Language: ${language.name}. Reply in ${language.name} first, with a short English translation in JSON.`,
+    `The learner is an English-speaking ${language.name} learner. Keep ${language.name} short, realistic, and kind.`,
     `Scene goal: ${scenario.goal}`,
     'Suggestions are optional coaching examples. React to what the learner actually said.',
     'Return only JSON with npcReply, feedback, suggestedResponses, scene, and memoryFacts.',

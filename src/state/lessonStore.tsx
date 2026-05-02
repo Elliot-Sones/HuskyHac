@@ -167,7 +167,7 @@ export function LessonProvider({
       if (!resolvedServices.speechInput.isSupported()) {
         dispatch({
           type: 'set-error',
-          message: 'Microphone recording is unavailable here. Type your French answer instead.',
+          message: `Microphone recording is unavailable here. Type your ${snapshot.scenario.npc.language} answer instead.`,
         });
         return null;
       }
@@ -409,7 +409,7 @@ function createScriptedNpcResult({
 }): NpcTurnFlowResult {
   const isFinalTurn = turnIndex >= scenario.turns.length - 1;
   const nextTurn = scenario.turns[Math.min(turnIndex + 1, scenario.turns.length - 1)];
-  const npcLine = isFinalTurn ? createCompletionNpcLine(scenario.id) : nextTurn.npcLine;
+  const npcLine = isFinalTurn ? createCompletionNpcLine(scenario) : nextTurn.npcLine;
 
   return {
     playerLine,
@@ -433,12 +433,31 @@ function createScriptedNpcResult({
   };
 }
 
-function createCompletionNpcLine(scenarioId: string): ScenarioTranscriptLine {
+function createCompletionNpcLine(scenario: Scenario): ScenarioTranscriptLine {
   return {
-    id: `npc-scripted-complete-${Date.now()}-${scenarioId}`,
+    id: `npc-scripted-complete-${Date.now()}-${scenario.id}`,
     speaker: 'npc',
-    text: 'Tres bien, merci. Bonne journee !',
+    text: completionTextFor(scenario.npc.language),
     translation: 'Very good, thank you. Have a good day!',
     source: 'scripted',
   };
+}
+
+function completionTextFor(languageName: string) {
+  switch (languageName) {
+    case 'French':
+      return 'Tres bien, merci. Bonne journee !';
+    case 'Spanish':
+      return 'Muy bien, gracias. Buen dia!';
+    case 'Japanese':
+      return 'とてもいいです。ありがとうございます。よい一日を！';
+    case 'German':
+      return 'Sehr gut, danke. Einen schonen Tag!';
+    case 'Italian':
+      return 'Molto bene, grazie. Buona giornata!';
+    case 'Portuguese':
+      return 'Muito bem, obrigado. Tenha um bom dia!';
+    default:
+      return 'Very good, thank you. Have a good day!';
+  }
 }

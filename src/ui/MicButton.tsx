@@ -3,10 +3,11 @@ import type { ConversationStatus } from '@/shared/contracts';
 interface MicButtonProps {
   status: ConversationStatus;
   isSupported: boolean;
+  targetLanguage: string;
   onToggle: () => void;
 }
 
-export function MicButton({ status, isSupported, onToggle }: MicButtonProps) {
+export function MicButton({ status, isSupported, targetLanguage, onToggle }: MicButtonProps) {
   const isRecording = status === 'recording' || status === 'listening';
   const isDisabled = !isSupported || status === 'thinking' || status === 'speaking';
 
@@ -17,7 +18,7 @@ export function MicButton({ status, isSupported, onToggle }: MicButtonProps) {
   const label = isRecording
     ? 'Stop recording'
     : isSupported
-      ? 'Record French answer'
+      ? `Record ${targetLanguage} answer`
       : 'Microphone unavailable';
 
   const helper = isRecording

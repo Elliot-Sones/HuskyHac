@@ -26,6 +26,7 @@ export function ConversationPanel() {
   const [showTyping, setShowTyping] = useState(false);
   const openingLineRequestedRef = useRef(false);
   const isBusy = BUSY_STATUSES.has(lesson.status);
+  const targetLanguage = lesson.scenario.npc.language;
   const npcInitials = lesson.scenario.npc.name
     .split(/\s+/)
     .filter(Boolean)
@@ -94,7 +95,9 @@ export function ConversationPanel() {
               }`}
             />
             <span className="text-[11px] font-semibold text-slate-200">
-              {STATUS_COPY[lesson.status]}
+              {lesson.status === 'recording'
+                ? `Recording ${targetLanguage}`
+                : STATUS_COPY[lesson.status]}
             </span>
           </div>
         </div>
@@ -154,6 +157,7 @@ export function ConversationPanel() {
           <MicButton
             status={lesson.status}
             isSupported={lesson.speechInputSupported}
+            targetLanguage={targetLanguage}
             onToggle={lesson.toggleListening}
           />
         </div>
@@ -175,15 +179,15 @@ export function ConversationPanel() {
           className="flex items-center gap-3 border-t border-white/[0.06] px-5 py-3"
         >
           <label className="min-w-0 flex-1">
-            <span className="sr-only">Custom French response</span>
+            <span className="sr-only">Custom {targetLanguage} response</span>
             <input
               value={draft}
               onChange={(event) => setDraft(event.target.value)}
               disabled={isBusy}
               placeholder={
                 lesson.speechInputSupported
-                  ? 'Type a custom French answer…'
-                  : 'Speech unavailable. Type your French answer.'
+                  ? `Type a custom ${targetLanguage} answer…`
+                  : `Speech unavailable. Type your ${targetLanguage} answer.`
               }
               className="h-11 w-full rounded-2xl border border-white/10 bg-black/25 px-4 text-[14px] text-white outline-none transition placeholder:text-slate-500 focus:border-emerald-200/50 focus:ring-2 focus:ring-emerald-300/20 disabled:cursor-not-allowed disabled:text-slate-400"
             />

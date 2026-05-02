@@ -3,6 +3,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { createDefaultSpeechInput } from '@/conversation';
 import type { ResponseOption } from '@/shared/contracts';
 import { useLessonStore } from '@/state/lessonStore';
+import { scenarioSpeechOptions } from '@/scenarios/languageProfiles';
 import { NpcCard } from '@/ui/NpcCard';
 import { ResponseOptions } from '@/ui/ResponseOptions';
 import { TranslationTooltip } from '@/ui/TranslationTooltip';
@@ -22,6 +23,7 @@ export function TransitConversationPanel({
   onTravelDestination,
 }: TransitConversationPanelProps) {
   const lesson = useLessonStore();
+  const targetLanguage = lesson.scenario.npc.language;
   const speechInput = useMemo(() => createDefaultSpeechInput(), []);
   const playedOpeningIdRef = useRef<string | null>(null);
   const recommended = useMemo(
@@ -83,7 +85,7 @@ export function TransitConversationPanel({
     setSpeechError(null);
 
     try {
-      const transcript = await speechInput.listen({ lang: 'fr-FR' });
+      const transcript = await speechInput.listen(scenarioSpeechOptions(lesson.scenario));
       setDraft(transcript.text);
       setPracticed(true);
     } catch (error) {
@@ -232,7 +234,7 @@ export function TransitConversationPanel({
               className="flex items-center gap-3 border-t border-white/[0.06] px-5 py-3"
             >
               <label className="min-w-0 flex-1">
-                <span className="sr-only">Custom French response</span>
+                <span className="sr-only">Custom {targetLanguage} response</span>
                 <input
                   value={draft}
                   onChange={(event) => {

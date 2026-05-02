@@ -53,6 +53,8 @@ describe('LessonProvider', () => {
     expect(speechOutput.speak).toHaveBeenCalledTimes(2);
     expect(speechOutput.speak).toHaveBeenCalledWith(airportFranceScenario.turns[0].npcLine, {
       lang: 'fr-FR',
+      languageName: 'French',
+      transcriptionLanguage: 'fr',
       preferBrowser: true,
     });
   });
@@ -81,6 +83,8 @@ describe('LessonProvider', () => {
     expect(speechOutput.speak).toHaveBeenCalledTimes(2);
     expect(speechOutput.speak).toHaveBeenCalledWith(transitLine, {
       lang: 'fr-FR',
+      languageName: 'French',
+      transcriptionLanguage: 'fr',
       preferBrowser: true,
     });
   });

@@ -65,6 +65,7 @@ export function createOpenAiSpeechOutput({
         body: JSON.stringify({
           text: line.text,
           lang: options.lang ?? 'fr-FR',
+          languageName: options.languageName,
         }),
       });
 

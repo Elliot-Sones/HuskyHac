@@ -59,6 +59,7 @@ function serializeScenario(scenario: Scenario) {
     destination: scenario.destination,
     terminal: scenario.terminal,
     goal: scenario.goal,
+    language: scenario.language,
     npc: scenario.npc,
     personaPrompt: scenario.personaPrompt,
     completionCriteria: scenario.completionCriteria,

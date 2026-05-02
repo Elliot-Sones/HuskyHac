@@ -2,6 +2,7 @@
 import { act } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
 import { afterEach, describe, expect, it, vi } from 'vitest';
+import { airportFranceScenario } from '@/scenarios/airportFrance';
 import { TransitConversationPanel } from '@/ui/TransitConversationPanel';
 import { TRANSIT_DIALOGUES } from '@/world/transitDialogues';
 
@@ -48,6 +49,7 @@ describe('TransitConversationPanel', () => {
     const autoPlayNpcLine = vi.fn(async () => {});
     mocks.useLessonStore.mockReturnValue({
       autoPlayNpcLine,
+      scenario: airportFranceScenario,
       speechOutputSupported: true,
     });
 
@@ -69,6 +71,7 @@ describe('TransitConversationPanel', () => {
     const onTravelDestination = vi.fn();
     mocks.useLessonStore.mockReturnValue({
       autoPlayNpcLine: vi.fn(async () => {}),
+      scenario: airportFranceScenario,
       speechOutputSupported: true,
     });
 
@@ -98,7 +101,11 @@ describe('TransitConversationPanel', () => {
     await renderTransitConversationPanel();
     await clickByAriaLabel('Answer by voice');
 
-    expect(mocks.speechInput.listen).toHaveBeenCalledWith({ lang: 'fr-FR' });
+    expect(mocks.speechInput.listen).toHaveBeenCalledWith({
+      lang: 'fr-FR',
+      languageName: 'French',
+      transcriptionLanguage: 'fr',
+    });
     expect(getButtonByText('Go to the Eiffel Tower')).not.toBeNull();
   });
 });
@@ -106,6 +113,7 @@ describe('TransitConversationPanel', () => {
 function createLessonStoreMock() {
   return {
     autoPlayNpcLine: vi.fn(async () => {}),
+    scenario: airportFranceScenario,
     speechInputSupported: true,
     speechOutputSupported: true,
   };

@@ -108,7 +108,7 @@ function backboardDevProxy(env: DevProxyEnv): Plugin {
               voice: getEnv('OPENAI_TTS_VOICE', env) || 'marin',
               input: text,
               instructions:
-                'Speak as a calm French airport information-desk agent. Use clear Parisian French, warm but concise.',
+                `Speak as a calm airport information-desk agent in ${getString(payload?.languageName) || 'French'}. Use clear, warm, concise speech.`,
               response_format: 'mp3',
             }),
           });
@@ -227,16 +227,20 @@ function buildNpcInstructions(payload: any) {
   const role = payload?.scenario?.npc?.role ?? 'airport information-desk agent';
   const goal = payload?.scenario?.goal ?? 'Help the learner ask for airport transport.';
   const persona = payload?.scenario?.personaPrompt ?? '';
+  const language =
+    getString(payload?.scenario?.language?.name) ||
+    getString(payload?.scenario?.npc?.language) ||
+    'French';
 
   return [
     `You are ${npcName}, a ${role}.`,
     persona,
-    'Reply as a realistic airport NPC in French. Keep French short and A1-A2 friendly.',
+    `Reply as a realistic airport NPC in ${language}. Keep ${language} short and A1-A2 friendly.`,
     'React to the learner transcript, not just to the suggested replies.',
-    'Offer gentle correction only when useful. Stay focused on airport transport to central Paris.',
+    'Offer gentle correction only when useful. Stay focused on the scene goal and local travel task.',
     `Scene goal: ${goal}`,
     'You must return valid JSON only.',
-    'JSON shape: {"npcReply":{"text":"French reply","translation":"English translation"},"feedback":{"summary":"short note","correction":"optional corrected French"},"suggestedResponses":[{"difficulty":"easy|natural|challenge","target":"French phrase","translation":"English phrase","recommended":true}],"scene":{"complete":false,"reason":"why","score":0.0},"memoryFacts":["short durable learning fact"]}',
+    `JSON shape: {"npcReply":{"text":"${language} reply","translation":"English translation"},"feedback":{"summary":"short note","correction":"optional corrected ${language}"},"suggestedResponses":[{"difficulty":"easy|natural|challenge","target":"${language} phrase","translation":"English phrase","recommended":true}],"scene":{"complete":false,"reason":"why","score":0.0},"memoryFacts":["short durable learning fact"]}`,
   ]
     .filter(Boolean)
     .join('\n');

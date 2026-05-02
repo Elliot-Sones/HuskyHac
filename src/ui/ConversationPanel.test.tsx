@@ -81,6 +81,7 @@ describe('ConversationPanel', () => {
     await renderConversationPanel();
 
     expect(getButtonByLabel('Record Spanish answer')).not.toBeNull();
+    await clickButton(getButtonByText('Type instead'));
     expect(container?.textContent).toContain('Custom Spanish response');
   });
 });

@@ -7,6 +7,7 @@ import { StarField } from './StarField';
 import { StartCTA } from './StartCTA';
 import { TopNav } from './TopNav';
 import { countrySlug, flagFromIsoA2, SUPPORTED, TEASERS } from './countries';
+import { getCountryLearningProfile } from '@/scenarios/countryAirportScenario';
 
 type Selection = {
   name: string;
@@ -25,6 +26,7 @@ export function LandingPage() {
   function handlePick(name: string, feature: any) {
     const supported = SUPPORTED[name];
     const teaser = TEASERS[name];
+    const profile = getCountryLearningProfile(name);
     const iso = (feature?.properties?.ISO_A2 as string | undefined) ?? null;
     const flag = supported?.flag ?? teaser?.flag ?? flagFromIsoA2(iso);
     const [lng, lat] = supported ? supported.centroid : featureCentroid(feature);
@@ -35,9 +37,7 @@ export function LandingPage() {
       flag,
       meta: supported
         ? supported.subtitle
-        : teaser
-          ? `${teaser.language} · explore route`
-          : 'Explore route',
+        : `${profile.language.name} · ${profile.city} airport route`,
     });
   }
 
@@ -57,7 +57,7 @@ export function LandingPage() {
   const ctaLabel = 'Start simulating your experience';
 
   const ctaSubline = selection
-    ? `Arriving at ${SUPPORTED[selection.name]?.place ?? selection.name}`
+    ? `Arriving at ${SUPPORTED[selection.name]?.place ?? getCountryLearningProfile(selection.name).airport}`
     : '';
 
   return (

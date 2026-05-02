@@ -76,6 +76,8 @@ describe('runNpcConversationTurn', () => {
     expect(result.complete).toBe(false);
     expect(speechOutput.speak).toHaveBeenCalledWith(result.npcLine, {
       lang: 'fr-FR',
+      languageName: 'French',
+      transcriptionLanguage: 'fr',
       preferBrowser: true,
     });
   });

@@ -1,4 +1,8 @@
-import type { SpeechInput, SpeechTranscript } from '@/conversation/conversationTypes';
+import type {
+  SpeechInput,
+  SpeechLanguageOptions,
+  SpeechTranscript,
+} from '@/conversation/conversationTypes';
 
 type FetchLike = (input: string | URL, init?: RequestInit) => Promise<Response>;
 
@@ -109,7 +113,7 @@ export function createOpenAiSpeechInput({
 
               const response = await fetcher(endpoint, {
                 method: 'POST',
-                body: buildTranscriptionForm(blob, options.lang ?? 'fr-FR'),
+                body: buildTranscriptionForm(blob, options),
               });
 
               if (!response.ok) {
@@ -135,15 +139,16 @@ export function createOpenAiSpeechInput({
   };
 }
 
-function buildTranscriptionForm(blob: Blob, lang: string) {
+function buildTranscriptionForm(blob: Blob, options: SpeechLanguageOptions) {
+  const languageName = options.languageName ?? languageNameFromLocale(options.lang) ?? 'French';
   const form = new FormData();
   form.append('file', blob, `learner-answer.${fileExtensionFor(blob.type)}`);
   form.append('model', DEFAULT_MODEL);
   form.append('response_format', 'json');
-  form.append('language', normalizeLanguage(lang));
+  form.append('language', normalizeLanguage(options.transcriptionLanguage ?? options.lang ?? 'fr-FR'));
   form.append(
     'prompt',
-    'The learner is speaking simple French in an airport roleplay. Preserve the French words they say.',
+    `The learner is speaking simple ${languageName} in an airport roleplay. Preserve the ${languageName} words they say.`,
   );
   return form;
 }
@@ -157,6 +162,45 @@ function fileExtensionFor(mimeType: string) {
   if (mimeType.includes('mpeg')) return 'mp3';
   if (mimeType.includes('wav')) return 'wav';
   return 'webm';
+}
+
+function languageNameFromLocale(locale: string | undefined) {
+  const prefix = locale?.split('-')[0]?.toLowerCase();
+
+  switch (prefix) {
+    case 'ar':
+      return 'Arabic';
+    case 'de':
+      return 'German';
+    case 'el':
+      return 'Greek';
+    case 'en':
+      return 'English';
+    case 'es':
+      return 'Spanish';
+    case 'fr':
+      return 'French';
+    case 'hi':
+      return 'Hindi';
+    case 'it':
+      return 'Italian';
+    case 'ja':
+      return 'Japanese';
+    case 'ko':
+      return 'Korean';
+    case 'nl':
+      return 'Dutch';
+    case 'pt':
+      return 'Portuguese';
+    case 'ru':
+      return 'Russian';
+    case 'tr':
+      return 'Turkish';
+    case 'zh':
+      return 'Mandarin';
+    default:
+      return undefined;
+  }
 }
 
 function resolveMimeType() {
