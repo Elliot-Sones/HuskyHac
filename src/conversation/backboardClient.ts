@@ -58,6 +58,11 @@ export function createBackboardNpcBrain({
       }
 
       const raw = (await response.json()) as BackboardMessageResponse;
+
+      if (raw.status === 'FAILED') {
+        throw new Error(getString(raw.content) || 'Backboard generation failed.');
+      }
+
       const reply = normalizeBackboardResponse(raw);
 
       if (storage && raw.thread_id) {

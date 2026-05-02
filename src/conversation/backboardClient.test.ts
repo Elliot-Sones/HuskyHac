@@ -88,4 +88,28 @@ describe('createBackboardNpcBrain', () => {
       'assistant-abc',
     );
   });
+
+  it('treats Backboard failed runs as unavailable so the default brain can fall back', async () => {
+    const fetcher = vi.fn(async () => {
+      return new Response(
+        JSON.stringify({
+          status: 'FAILED',
+          content: 'Free credits can only be used for memory and RAG.',
+        }),
+        { status: 200, headers: { 'Content-Type': 'application/json' } },
+      );
+    });
+
+    const brain = createBackboardNpcBrain({ fetcher });
+
+    await expect(
+      brain.generateReply({
+        scenario: airportFranceScenario,
+        turn: airportFranceScenario.turns[0],
+        transcript: [airportFranceScenario.turns[0].npcLine],
+        learnerText: 'Bonjour.',
+        inputSource: 'typed',
+      }),
+    ).rejects.toThrow('Free credits');
+  });
 });
