@@ -124,6 +124,15 @@ export function GlobeCanvas({ selected, pin, onPickCountry }: Props) {
     }
   }, [selected, pin]);
 
+  // three-globe doesn't re-evaluate polygon accessors when only closure values
+  // (selected/hovered) change, so re-set them to themselves to force a refresh.
+  useEffect(() => {
+    const g = globeRef.current;
+    if (!g) return;
+    g.polygonAltitude(g.polygonAltitude());
+    g.polygonCapColor(g.polygonCapColor());
+  }, [selected, hovered]);
+
   const labelHtml = useMemo(
     () => (d: Feature) => {
       const name = d.properties.ADMIN;
