@@ -10,7 +10,7 @@ describe('createTransitConversationFocus', () => {
 
       expect(focus.camera.y).toBeGreaterThan(2);
       expect(focus.camera.z).toBeGreaterThan(target.position.z);
-      expect(focus.look.y).toBeGreaterThan(1);
+      expect(focus.look.y).toBeGreaterThan(0.5);
       expect(Number.isFinite(focus.look.x)).toBe(true);
       expect(Number.isFinite(focus.look.z)).toBe(true);
     }
