@@ -47,8 +47,6 @@ function buildLabel(d: Feature): string {
 export function GlobeCanvas({ selected, pin, onPickCountry }: Props) {
   const globeRef = useRef<any>(null);
   const hostRef = useRef<HTMLDivElement>(null);
-  // Mutable hover/selected so polygon accessors always read the latest values.
-  // (React state would create stale closures across the three-globe boundary.)
   const stateRef = useRef<{ selected: string | null; hovered: string | null }>({
     selected: null,
     hovered: null,
@@ -56,29 +54,42 @@ export function GlobeCanvas({ selected, pin, onPickCountry }: Props) {
   const hasFlownInRef = useRef(false);
   const onPickRef = useRef(onPickCountry);
   const [features, setFeatures] = useState<Feature[]>([]);
+  const [hovered, setHovered] = useState<string | null>(null);
   const [size, setSize] = useState({ w: window.innerWidth, h: window.innerHeight });
-  const [debugLog, setDebugLog] = useState<string[]>([]);
-  const pushLog = (line: string) =>
-    setDebugLog((prev) => [...prev.slice(-5), line]);
 
   const oceanMaterial = useMemo(
     () => new THREE.MeshBasicMaterial({ color: new THREE.Color(OCEAN) }),
     [],
   );
 
-  // Keep imperative click handler reaching the latest onPickCountry.
+  // Force a new polygonsData reference whenever the selection or hover changes
+  // so three-globe re-evaluates the accessor functions. Cheap (small array).
+  // This avoids the manual `polygonAltitude(polygonAltitude())` refresh trick,
+  // which crashes three-globe by re-entering its update digest.
+  const polygonsForRender = useMemo(
+    () => features.slice(),
+    [features, selected, hovered],
+  );
+
+  // Mirror selected/hovered into a ref so accessor closures always read fresh
+  // values, even before the next React render commits.
+  useEffect(() => {
+    stateRef.current.selected = selected;
+  }, [selected]);
+  useEffect(() => {
+    stateRef.current.hovered = hovered;
+  }, [hovered]);
+
   useEffect(() => {
     onPickRef.current = onPickCountry;
   });
 
-  // Resize handler.
   useEffect(() => {
     const onResize = () => setSize({ w: window.innerWidth, h: window.innerHeight });
     window.addEventListener('resize', onResize);
     return () => window.removeEventListener('resize', onResize);
   }, []);
 
-  // Load country features once.
   useEffect(() => {
     let cancelled = false;
     fetch(COUNTRIES_GEOJSON_URL)
@@ -94,12 +105,11 @@ export function GlobeCanvas({ selected, pin, onPickCountry }: Props) {
     };
   }, []);
 
-  // One-time imperative configuration of the globe (controls + ocean material).
+  // One-time globe configuration: material, controls, intro pan.
   useEffect(() => {
     const id = window.setTimeout(() => {
       const world = globeRef.current;
       if (!world) return;
-
       try {
         const mat = world.globeMaterial() as THREE.MeshPhongMaterial;
         mat.color.set(OCEAN);
@@ -114,7 +124,6 @@ export function GlobeCanvas({ selected, pin, onPickCountry }: Props) {
       } catch {
         /* material not ready */
       }
-
       const controls = world.controls();
       controls.autoRotate = true;
       controls.autoRotateSpeed = 0.28;
@@ -124,13 +133,11 @@ export function GlobeCanvas({ selected, pin, onPickCountry }: Props) {
       controls.minDistance = 180;
       controls.maxDistance = 600;
       controls.enablePan = false;
-
       world.pointOfView({ lat: 28, lng: 6, altitude: 2.35 }, 1400);
     }, 0);
     return () => window.clearTimeout(id);
   }, []);
 
-  // Pause autorotate on user interaction.
   useEffect(() => {
     const el = hostRef.current;
     if (!el) return;
@@ -143,21 +150,12 @@ export function GlobeCanvas({ selected, pin, onPickCountry }: Props) {
     return () => evs.forEach((ev) => el.removeEventListener(ev, stop));
   }, []);
 
-  // When the React `selected` prop changes, mirror it into stateRef and force
-  // three-globe to re-evaluate the polygon accessors. Then animate the camera.
+  // Camera animation: gentle fly-in on first pick, fixed altitude re-aim on
+  // later picks. We do NOT call `pointOfView()` as a getter (that path is what
+  // triggered the `pov is undefined` crash inside three-globe).
   useEffect(() => {
-    console.log('[GlobeCanvas] selection effect', { selected, pin, featuresLen: features.length });
-    stateRef.current.selected = selected;
     const world = globeRef.current;
     if (!world) return;
-    if (features.length > 0) {
-      try {
-        world.polygonAltitude(world.polygonAltitude());
-        world.polygonCapColor(world.polygonCapColor());
-      } catch {
-        /* ignore */
-      }
-    }
     const controls = world.controls();
     if (selected && pin) {
       controls.autoRotate = false;
@@ -165,16 +163,12 @@ export function GlobeCanvas({ selected, pin, onPickCountry }: Props) {
         world.pointOfView({ lat: pin.lat, lng: pin.lng, altitude: 1.85 }, 1100);
         hasFlownInRef.current = true;
       } else {
-        const current = world.pointOfView();
-        world.pointOfView(
-          { lat: pin.lat, lng: pin.lng, altitude: current.altitude },
-          600,
-        );
+        world.pointOfView({ lat: pin.lat, lng: pin.lng, altitude: 1.85 }, 600);
       }
     } else {
       controls.autoRotate = true;
     }
-  }, [selected, pin, features.length]);
+  }, [selected, pin]);
 
   return (
     <div ref={hostRef} className="globe-host">
@@ -188,7 +182,7 @@ export function GlobeCanvas({ selected, pin, onPickCountry }: Props) {
         showAtmosphere
         atmosphereColor="#a8c8ff"
         atmosphereAltitude={0.18}
-        polygonsData={features}
+        polygonsData={polygonsForRender}
         polygonsTransitionDuration={380}
         polygonAltitude={(d: any) => {
           const name = d.properties.ADMIN;
@@ -208,22 +202,10 @@ export function GlobeCanvas({ selected, pin, onPickCountry }: Props) {
         polygonStrokeColor={() => 'rgba(0,0,0,0.32)'}
         polygonLabel={buildLabel as any}
         onPolygonHover={(p: any) => {
-          stateRef.current.hovered = p ? p.properties.ADMIN : null;
+          setHovered(p ? (p.properties.ADMIN as string) : null);
           document.body.style.cursor = p ? 'pointer' : 'default';
-          const g = globeRef.current;
-          if (g) {
-            try {
-              g.polygonAltitude(g.polygonAltitude());
-              g.polygonCapColor(g.polygonCapColor());
-            } catch {
-              /* ignore */
-            }
-          }
         }}
         onPolygonClick={(p: any) => {
-          const name = p?.properties?.ADMIN ?? '(none)';
-          console.log('[GlobeCanvas] onPolygonClick', name, p);
-          pushLog(`click: ${name}`);
           if (!p) return;
           onPickRef.current(p.properties.ADMIN as string, p);
         }}
