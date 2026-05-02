@@ -5,6 +5,7 @@ import { createRoot, type Root } from 'react-dom/client';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import type { RoomState } from '@/shared/contracts';
 import { RemoteSnapshotStore } from '@/multiplayer/remoteSnapshotStore';
+import { airportFranceScenario } from '@/scenarios/airportFrance';
 import { WorldCanvas } from '@/world/WorldCanvas';
 import { airportWorldLayout } from '@/world/airportLayout';
 
@@ -79,6 +80,19 @@ describe('WorldCanvas multiplayer integration', () => {
       expect.anything(),
     );
   });
+
+  it('passes the active scenario NPC to the rendered world scene', async () => {
+    const Scene = vi.fn(() => <div data-testid="scene" />);
+
+    await renderWorldCanvas({ Scene, npc: airportFranceScenario.npc });
+
+    expect(Scene).toHaveBeenCalledWith(
+      expect.objectContaining({
+        npc: airportFranceScenario.npc,
+      }),
+      expect.anything(),
+    );
+  });
 });
 
 async function renderWorldCanvas(overrides: Partial<ComponentProps<typeof WorldCanvas>> = {}) {
@@ -91,6 +105,7 @@ async function renderWorldCanvas(overrides: Partial<ComponentProps<typeof WorldC
     mode: 'world',
     layout: airportWorldLayout,
     Scene,
+    npc: airportFranceScenario.npc,
     isNearNpc: false,
     conversationStatus: 'idle',
     onNearNpcChange: vi.fn(),

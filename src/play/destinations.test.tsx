@@ -7,6 +7,8 @@ describe('resolvePlayDestination', () => {
 
     expect(destination.id).toBe('airport-spain');
     expect(destination.scenario.destination).toBe('Madrid, Spain');
+    expect(destination.scenario.npc.name).toBe('Agente Sofia');
+    expect(destination.scenario.npc.name).not.toBe('Mme. Laurent');
     expect(destination.scenario.npc.language).toBe('Spanish');
     expect((destination.scenario as any).language).toMatchObject({
       name: 'Spanish',
@@ -21,6 +23,8 @@ describe('resolvePlayDestination', () => {
 
     expect(destination.id).toBe('airport-japan');
     expect(destination.scenario.destination).toBe('Tokyo, Japan');
+    expect(destination.scenario.npc.name).toBe('Agent Tanaka');
+    expect(destination.scenario.npc.name).not.toBe('Mme. Laurent');
     expect(destination.scenario.npc.language).toBe('Japanese');
     expect((destination.scenario as any).language).toMatchObject({
       name: 'Japanese',
