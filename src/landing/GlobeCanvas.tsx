@@ -9,15 +9,14 @@ type Feature = {
   geometry: any;
 };
 
-// Abstract blue marble — one hue family. Land is barely-there until hovered.
-const OCEAN = '#2188cc';
-const OCEAN_GLOW = '#1c79b8';
-const LAND = '#1c79b8';        // a notch darker than ocean (subtle relief)
-const LAND_DARK = '#155b91';   // extrusion side
-const LAND_HOVER = '#7fc4ee';  // light, clear highlight on hover
-const LAND_SUPPORTED = '#3398d6';
-const LAND_TEASER = '#2e8fcd';
-const LAND_SELECT = '#f5b647'; // warm gold — the only non-blue accent
+const OCEAN = '#2a82c5';
+const OCEAN_GLOW = '#3a99dc';
+const LAND = '#5fa67c';
+const LAND_DARK = '#2f6a4d';
+const LAND_SUPPORTED = '#7fb89a';
+const LAND_TEASER = '#6ca685';
+const LAND_HOVER = '#88c79e';
+const LAND_SELECT = '#e0a93b';
 
 export type GlobePin = { lat: number; lng: number; flag: string };
 
@@ -54,6 +53,7 @@ export function GlobeCanvas({ selected, pin, onPickCountry, onUnknownCountry }: 
     return () => window.removeEventListener('resize', onResize);
   }, []);
 
+  // Globe material + controls — applied once after the globe instance exists.
   useEffect(() => {
     const id = window.setTimeout(() => {
       const g = globeRef.current;
@@ -62,8 +62,8 @@ export function GlobeCanvas({ selected, pin, onPickCountry, onUnknownCountry }: 
         const mat = g.globeMaterial() as THREE.MeshPhongMaterial;
         mat.color = new THREE.Color(OCEAN);
         mat.emissive = new THREE.Color(OCEAN_GLOW);
-        mat.emissiveIntensity = 0.06;
-        mat.shininess = 8;
+        mat.emissiveIntensity = 0.12;
+        mat.shininess = 4;
       } catch {
         /* material may not be ready yet */
       }
@@ -81,6 +81,7 @@ export function GlobeCanvas({ selected, pin, onPickCountry, onUnknownCountry }: 
     return () => window.clearTimeout(id);
   }, []);
 
+  // Pause autorotate on user interaction.
   useEffect(() => {
     const el = hostRef.current;
     if (!el) return;
@@ -93,6 +94,7 @@ export function GlobeCanvas({ selected, pin, onPickCountry, onUnknownCountry }: 
     return () => evs.forEach((ev) => el.removeEventListener(ev, stop));
   }, []);
 
+  // When selection changes, pan camera to the pin centroid (or resume rotation).
   useEffect(() => {
     const g = globeRef.current;
     if (!g) return;
@@ -111,18 +113,18 @@ export function GlobeCanvas({ selected, pin, onPickCountry, onUnknownCountry }: 
       const supported = SUPPORTED[name];
       const teaser = TEASERS[name];
       if (supported) {
-        return `<div style="background:rgba(255,255,255,0.96);padding:8px 12px;border-radius:10px;border:1px solid rgba(15,23,42,0.08);box-shadow:0 8px 24px -8px rgba(15,23,42,0.18);font-family:Inter,sans-serif;color:#0b1228;letter-spacing:-.005em;">
+        return `<div style="background:rgba(255,255,255,.94);padding:8px 12px;border-radius:10px;border:1px solid rgba(15,23,42,.08);font-family:Inter,sans-serif;color:#0b1228;letter-spacing:-.005em;">
           <div style="font-weight:700;font-size:13px;display:flex;align-items:center;gap:8px;">${supported.flag} ${name}</div>
-          <div style="font-size:11px;color:#64748b;margin-top:2px;letter-spacing:.02em">Click to start your ${supported.language} trip</div>
+          <div style="font-size:11px;opacity:.65;margin-top:2px;letter-spacing:.02em">Click to start your ${supported.language} trip</div>
         </div>`;
       }
       if (teaser) {
-        return `<div style="background:rgba(255,255,255,0.96);padding:8px 12px;border-radius:10px;border:1px solid rgba(15,23,42,0.08);box-shadow:0 8px 24px -8px rgba(15,23,42,0.18);font-family:Inter,sans-serif;color:#0b1228;letter-spacing:-.005em;">
+        return `<div style="background:rgba(255,255,255,.94);padding:8px 12px;border-radius:10px;border:1px solid rgba(15,23,42,.08);font-family:Inter,sans-serif;color:#0b1228;letter-spacing:-.005em;">
           <div style="font-weight:700;font-size:13px;display:flex;align-items:center;gap:8px;">${teaser.flag} ${name}</div>
-          <div style="font-size:11px;color:#64748b;margin-top:2px">${teaser.language} · in production</div>
+          <div style="font-size:11px;opacity:.6;margin-top:2px">${teaser.language} · in production</div>
         </div>`;
       }
-      return `<div style="background:rgba(255,255,255,0.96);padding:6px 10px;border-radius:9px;border:1px solid rgba(15,23,42,0.08);font-family:Inter,sans-serif;color:#0b1228;font-size:12px;">${name}</div>`;
+      return `<div style="background:rgba(255,255,255,.94);padding:6px 10px;border-radius:9px;border:1px solid rgba(15,23,42,.06);font-family:Inter,sans-serif;color:#0b1228;font-size:12px;">${name}</div>`;
     },
     [],
   );
@@ -136,14 +138,14 @@ export function GlobeCanvas({ selected, pin, onPickCountry, onUnknownCountry }: 
         backgroundColor="rgba(0,0,0,0)"
         showGlobe
         showAtmosphere
-        atmosphereColor="#bcd9f5"
-        atmosphereAltitude={0.13}
+        atmosphereColor="#7eb6e8"
+        atmosphereAltitude={0.14}
         polygonsData={features}
         polygonAltitude={(d: any) => {
           const name = d.properties.ADMIN;
-          if (selected === name) return 0.045;
-          if (hovered === name) return 0.025;
-          return 0.005;
+          if (selected === name) return 0.055;
+          if (hovered === name) return 0.038;
+          return 0.014;
         }}
         polygonCapColor={(d: any) => {
           const name = d.properties.ADMIN;
@@ -154,7 +156,7 @@ export function GlobeCanvas({ selected, pin, onPickCountry, onUnknownCountry }: 
           return LAND;
         }}
         polygonSideColor={() => LAND_DARK}
-        polygonStrokeColor={() => 'rgba(255,255,255,0.10)'}
+        polygonStrokeColor={() => 'rgba(0,0,0,0.32)'}
         polygonsTransitionDuration={380}
         polygonLabel={labelHtml as any}
         onPolygonHover={(p: any) => {
