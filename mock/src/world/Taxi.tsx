@@ -5,7 +5,7 @@ import { useGameStore } from "../store/gameStore";
  * Parked taxi the player can walk up to in the airport scene.
  * Same primitive-style aesthetic as Character / AirportScene.
  */
-export function Taxi({ position = [-2, 0, 12] as [number, number, number] }) {
+export function Taxi({ position = [10, 0, 3] as [number, number, number] }) {
   const target = useGameStore((s) => s.proximityTarget);
   const mode = useGameStore((s) => s.mode);
   const isNear = target === "taxi";

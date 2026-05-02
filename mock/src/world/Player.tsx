@@ -6,7 +6,7 @@ import { useGameStore } from "../store/gameStore";
 import { Character } from "./Character";
 
 const NPC_POSITION = new THREE.Vector3(5, 0, -3);
-const TAXI_POSITION = new THREE.Vector3(-2, 0, 12);
+const TAXI_POSITION = new THREE.Vector3(10, 0, 3);
 const INTERACT_RADIUS = 3.5;
 
 export function Player() {
