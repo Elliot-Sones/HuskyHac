@@ -9,7 +9,7 @@ export function HeroTitle() {
         <br />
         <span className="title-hard">Learn the language.</span>
       </h1>
-      <p className="mt-6 max-w-[36rem] text-[15px] sm:text-[17px] text-slate-300/75 leading-relaxed">
+      <p className="mt-6 max-w-[36rem] text-[15px] sm:text-[17px] text-slate-600 leading-relaxed">
         An immersive language practice world. Step off the plane, walk the airport,
         and talk your way through it. Pick a country to begin your trip.
       </p>

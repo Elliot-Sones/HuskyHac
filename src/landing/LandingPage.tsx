@@ -22,7 +22,6 @@ export function LandingPage() {
   const [toast, setToast] = useState<string | null>(null);
   const [boarding, setBoarding] = useState<'idle' | 'flash' | 'fade'>('idle');
   const toastTimer = useRef<number | null>(null);
-  const bodyRef = useRef<HTMLDivElement>(null);
 
   function flashToast(message: string) {
     setToast(message);
@@ -77,18 +76,14 @@ export function LandingPage() {
 
   return (
     <div
-      ref={bodyRef}
       className={`no-select boarding ${boarding === 'flash' ? 'flash' : ''} ${boarding === 'fade' ? 'fade' : ''}`}
     >
-      <div className="stars" />
       <GlobeCanvas
         selected={selection?.name ?? null}
         pin={pin}
         onPickCountry={handlePick}
         onUnknownCountry={(name) => flashToast(`${name} isn't on the language map yet.`)}
       />
-      <div className="grain" />
-      <div className="vignette" />
 
       <TopNav />
       <HeroTitle />
@@ -103,14 +98,14 @@ export function LandingPage() {
 
       <Toast visible={!!toast} message={toast ?? ''} />
 
-      <div className="hint fixed bottom-7 left-8 sm:left-12 z-20 text-[11px] text-slate-400 hidden sm:flex items-center gap-2 font-mono">
+      <div className="fixed bottom-7 left-8 sm:left-12 z-20 text-[11px] text-slate-400 hidden sm:flex items-center gap-2 font-mono">
         <span>drag</span>
-        <span className="opacity-30">to spin</span>
-        <span className="opacity-20">·</span>
+        <span className="opacity-50">to spin</span>
+        <span className="opacity-30">·</span>
         <span>scroll</span>
-        <span className="opacity-30">to zoom</span>
+        <span className="opacity-50">to zoom</span>
       </div>
-      <div className="hint fixed bottom-7 right-8 sm:right-12 z-20 text-[11px] text-slate-400 font-mono">
+      <div className="fixed bottom-7 right-8 sm:right-12 z-20 text-[11px] text-slate-400 font-mono">
         v0.1 · landing
       </div>
 
