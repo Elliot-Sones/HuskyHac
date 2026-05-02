@@ -1,7 +1,7 @@
 export { ConversationPanel } from '@/ui/ConversationPanel';
 export { FranceAirportLesson } from '@/ui/FranceAirportLesson';
 export { GoalHud } from '@/ui/GoalHud';
-export { GoalPill } from '@/ui/GoalPill';
+export { NpcCard } from '@/ui/NpcCard';
 export { MicButton } from '@/ui/MicButton';
 export { ResponseOptions } from '@/ui/ResponseOptions';
 export { TranscriptLine } from '@/ui/TranscriptLine';

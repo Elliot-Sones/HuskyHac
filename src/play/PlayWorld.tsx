@@ -9,7 +9,7 @@ import { MultiplayerLobby } from '@/multiplayer/MultiplayerLobby';
 import { MultiplayerProvider, useMultiplayer } from '@/multiplayer/MultiplayerProvider';
 import { LessonProvider, useLessonStore } from '@/state/lessonStore';
 import { ConversationPanel } from '@/ui/ConversationPanel';
-import { GoalPill } from '@/ui/GoalPill';
+import { NpcCard } from '@/ui/NpcCard';
 import { TransitConversationPanel } from '@/ui/TransitConversationPanel';
 import { WorldHud } from '@/ui/WorldHud';
 import { WorldCanvas } from '@/world/WorldCanvas';
@@ -135,7 +135,7 @@ function PlayWorldInner({
         <div className="pointer-events-none absolute inset-0 z-20">
           <div className="absolute inset-0 bg-slate-950/15" />
           <div className="pointer-events-auto absolute left-4 right-4 top-4 z-20 flex items-start justify-between gap-4">
-            <GoalPill goal={lesson.scenario.goal} progress={lesson.goalProgress} />
+            <NpcCard npc={lesson.scenario.npc} personality={lesson.scenario.personaPrompt} />
             <button
               type="button"
               onClick={() => setMode('world')}
