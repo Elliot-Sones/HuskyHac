@@ -1,5 +1,9 @@
 import type { ComponentType } from 'react';
 import type { Scenario } from '@/shared/contracts';
+import {
+  countryNameFromAirportSlug,
+  createCountryAirportScenario,
+} from '@/scenarios/countryAirportScenario';
 import { airportFranceScenario } from '@/scenarios/airportFrance';
 import { eiffelTowerFranceScenario } from '@/scenarios/eiffelTowerFrance';
 import { parisCoffeeShopScenario } from '@/scenarios/parisCoffeeShop';
@@ -46,5 +50,27 @@ export const playDestinations: Record<string, PlayDestination> = {
 };
 
 export function resolvePlayDestination(slug: string | null | undefined): PlayDestination {
-  return playDestinations[slug ?? ''] ?? playDestinations.france;
+  const key = slug ?? '';
+
+  if (playDestinations[key]) {
+    return playDestinations[key];
+  }
+
+  if (key.startsWith('airport-')) {
+    return createAirportDestination(key);
+  }
+
+  return playDestinations.france;
+}
+
+function createAirportDestination(slug: string): PlayDestination {
+  return {
+    id: slug,
+    scenario: createCountryAirportScenario(countryNameFromAirportSlug(slug)),
+    layout: {
+      ...airportWorldLayout,
+      id: slug,
+    },
+    Scene: AirportScene,
+  };
 }

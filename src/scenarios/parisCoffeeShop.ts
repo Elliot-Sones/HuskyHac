@@ -1,4 +1,5 @@
 import type { Scenario } from '@/shared/contracts';
+import { LANGUAGE_PROFILES } from '@/scenarios/languageProfiles';
 
 export const parisCoffeeShopScenario = {
   id: 'france-coffee_shop',
@@ -7,6 +8,7 @@ export const parisCoffeeShopScenario = {
   terminal: 'Café Bisset · Le Marais',
   goal: 'Order a coffee at a Paris café and pay politely.',
   progress: 0,
+  language: LANGUAGE_PROFILES.French,
   personaPrompt:
     'Léa Martin is a warm, attentive Parisian barista. She greets in French, repeats coffee names slowly, gently corrects polite phrasing, and keeps the learner moving from order to payment.',
   completionCriteria: [

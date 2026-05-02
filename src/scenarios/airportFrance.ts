@@ -1,4 +1,5 @@
 import type { Scenario } from '@/shared/contracts';
+import { LANGUAGE_PROFILES } from '@/scenarios/languageProfiles';
 
 export const airportFranceScenario = {
   id: 'airport-france',
@@ -7,6 +8,7 @@ export const airportFranceScenario = {
   terminal: 'Charles de Gaulle · Terminal 2E',
   goal: 'Ask the airport agent how to reach central Paris.',
   progress: 0,
+  language: LANGUAGE_PROFILES.French,
   personaPrompt:
     'Mme. Laurent is a concise airport information-desk agent. She answers in short French, repeats key transport words, gently corrects learner phrases, and stays focused on reaching central Paris.',
   completionCriteria: [

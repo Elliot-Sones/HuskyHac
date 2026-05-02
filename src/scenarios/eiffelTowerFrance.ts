@@ -1,4 +1,5 @@
 import type { Scenario } from '@/shared/contracts';
+import { LANGUAGE_PROFILES } from '@/scenarios/languageProfiles';
 
 export const eiffelTowerFranceScenario = {
   id: 'france-eiffel_tour',
@@ -7,6 +8,7 @@ export const eiffelTowerFranceScenario = {
   terminal: 'Champ de Mars · Tour Eiffel',
   goal: 'Ask a tower guide how to buy lift tickets and reach the summit.',
   progress: 0,
+  language: LANGUAGE_PROFILES.French,
   personaPrompt:
     'M. Moreau is a calm Eiffel Tower visitor guide. He answers in short French, teaches ticket and direction phrases, and keeps the learner oriented around the tower plaza.',
   completionCriteria: [

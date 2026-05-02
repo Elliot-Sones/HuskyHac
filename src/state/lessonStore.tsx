@@ -27,6 +27,7 @@ import type {
   TranscriptLine as ScenarioTranscriptLine,
 } from '@/shared/contracts';
 import { airportFranceScenario } from '@/scenarios/airportFrance';
+import { scenarioSpeechOptions } from '@/scenarios/languageProfiles';
 import { matchResponseVariant } from '@/scenarios/responseMatching';
 
 interface ReplayNpcLineOptions {
@@ -174,7 +175,9 @@ export function LessonProvider({
       dispatch({ type: 'set-status', status: 'recording' });
 
       try {
-        const transcript = await resolvedServices.speechInput.listen({ lang: 'fr-FR' });
+        const transcript = await resolvedServices.speechInput.listen(
+          scenarioSpeechOptions(snapshot.scenario),
+        );
         dispatch({ type: 'set-status', status: 'transcribing' });
         await submitLearnerText(transcript.text, 'speech');
         return transcript;
@@ -194,7 +197,7 @@ export function LessonProvider({
       dispatch({ type: 'set-status', status: 'speaking' });
       try {
         await resolvedServices.speechOutput.speak(line, {
-          lang: 'fr-FR',
+          ...scenarioSpeechOptions(stateRef.current.scenario),
           preferBrowser: options.immediate,
         });
         dispatch({

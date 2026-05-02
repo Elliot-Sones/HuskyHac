@@ -5,6 +5,7 @@ import type {
   NpcTurnFlowResult,
   SpeechOutput,
 } from '@/conversation/conversationTypes';
+import { scenarioSpeechOptions } from '@/scenarios/languageProfiles';
 
 interface RunNpcConversationTurnParams {
   scenario: Scenario;
@@ -44,7 +45,7 @@ export async function runNpcConversationTurn({
   };
 
   void speechOutput.speak(npcLine, {
-    lang: 'fr-FR',
+    ...scenarioSpeechOptions(scenario),
     preferBrowser: true,
   }).catch((error) => {
     console.warn('NPC speech playback failed.', error);
