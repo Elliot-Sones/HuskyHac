@@ -4,7 +4,12 @@ import { Canvas } from '@react-three/fiber';
 import { Environment, KeyboardControls, Loader, PerspectiveCamera } from '@react-three/drei';
 import type { ConversationStatus, SceneMode } from '@/shared/contracts';
 import { PlayerController } from '@/world/PlayerController';
-import type { WorldLayout, WorldSceneProps, WorldTransitTarget } from '@/world/worldLayout';
+import type {
+  WorldConversationFocus,
+  WorldLayout,
+  WorldSceneProps,
+  WorldTransitTarget,
+} from '@/world/worldLayout';
 
 interface WorldCanvasProps {
   mode: SceneMode;
@@ -16,6 +21,7 @@ interface WorldCanvasProps {
   onNearTransitChange: (target: WorldTransitTarget | null) => void;
   onInteract: () => void;
   onTransitInteract: (target: WorldTransitTarget) => void;
+  conversationFocus?: WorldConversationFocus | null;
 }
 
 const keyMap = [
@@ -36,6 +42,7 @@ export function WorldCanvas({
   onNearTransitChange,
   onInteract,
   onTransitInteract,
+  conversationFocus = null,
 }: WorldCanvasProps) {
   return (
     <div data-testid="world-canvas-host" className="absolute inset-0">
@@ -82,6 +89,7 @@ export function WorldCanvas({
               onNearTransitChange={onNearTransitChange}
               onInteract={onInteract}
               onTransitInteract={onTransitInteract}
+              conversationFocus={conversationFocus}
             />
           </Suspense>
         </Canvas>

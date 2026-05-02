@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import type { SceneMode } from '@/shared/contracts';
 import { ArrivalTransition } from '@/play/ArrivalTransition';
@@ -9,6 +9,7 @@ import { ConversationPanel } from '@/ui/ConversationPanel';
 import { TransitConversationPanel } from '@/ui/TransitConversationPanel';
 import { WorldHud } from '@/ui/WorldHud';
 import { WorldCanvas } from '@/world/WorldCanvas';
+import { createTransitConversationFocus } from '@/world/transitCamera';
 import { getTransitDialogue } from '@/world/transitDialogues';
 import type { WorldTransitTarget } from '@/world/worldLayout';
 
@@ -41,6 +42,11 @@ function PlayWorldInner({ destination }: { destination: PlayDestination }) {
   const [nearTransit, setNearTransit] = useState<WorldTransitTarget | null>(null);
   const [activeTransit, setActiveTransit] = useState<WorldTransitTarget | null>(null);
   const activeTransitDialogue = activeTransit ? getTransitDialogue(activeTransit.id) : null;
+  const activeTransitFocus = useMemo(
+    () => (activeTransit ? createTransitConversationFocus(activeTransit) : null),
+    [activeTransit],
+  );
+  const canvasMode: SceneMode = activeTransitDialogue ? 'conversation' : mode;
 
   useEffect(() => {
     function handleKeyDown(event: KeyboardEvent) {
@@ -63,11 +69,11 @@ function PlayWorldInner({ destination }: { destination: PlayDestination }) {
   return (
     <div className="relative h-screen w-screen overflow-hidden bg-slate-200 text-white">
       <WorldCanvas
-        mode={mode}
+        mode={canvasMode}
         layout={destination.layout}
         Scene={destination.Scene}
         isNearNpc={isNearNpc}
-        conversationStatus={lesson.status}
+        conversationStatus={activeTransitDialogue ? 'idle' : lesson.status}
         onNearNpcChange={setIsNearNpc}
         onNearTransitChange={setNearTransit}
         onInteract={() => {
@@ -76,9 +82,10 @@ function PlayWorldInner({ destination }: { destination: PlayDestination }) {
           void lesson.replayLastNpcLine();
         }}
         onTransitInteract={(target) => setActiveTransit(target)}
+        conversationFocus={activeTransitFocus}
       />
 
-      {mode === 'world' && (
+      {mode === 'world' && !activeTransitDialogue && (
         <WorldHud
           scenario={lesson.scenario}
           isNearNpc={isNearNpc}

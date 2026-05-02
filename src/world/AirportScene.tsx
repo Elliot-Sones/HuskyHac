@@ -30,7 +30,7 @@ export function AirportScene({ mode, isNearNpc, conversationStatus }: AirportSce
       <FloorTiles />
 
       <TerminalWalls />
-      <RearTaxiExterior />
+      <RearTaxiExterior mode={mode} />
       <FloorWayfinding />
       <InformationDesk mode={mode} talking={talking} isNearNpc={isNearNpc} />
       <ArrivalBoard />
@@ -188,7 +188,9 @@ function FloorWayfinding() {
   );
 }
 
-function RearTaxiExterior() {
+function RearTaxiExterior({ mode }: { mode: SceneMode }) {
+  const showTransitPrompts = mode === 'world';
+
   return (
     <group>
       <mesh rotation={[-Math.PI / 2, 0, 0]} position={[-5.2, 0.005, -13.7]}>
@@ -223,7 +225,7 @@ function RearTaxiExterior() {
       <group position={[-5.2, 1.95, -13.2]}>
         <HangingSign width={5.3} label="TAXI PICKUP" sublabel="Prise en charge taxi" />
       </group>
-      <TransitPrompt position={[-5.2, 1.95, -16.8]} label="Enter taxi" />
+      {showTransitPrompts && <TransitPrompt position={[-5.2, 1.95, -16.8]} label="Enter taxi" />}
 
       {[-7.5, -4.9, -2.3].map((x) => (
         <mesh key={x} position={[x, 0.055, -18.7]} rotation={[-Math.PI / 2, 0, 0]}>
@@ -250,7 +252,7 @@ function RearTaxiExterior() {
 
       <Bus position={[-9.2, 0.04, -29.2]} />
       <BusShelter position={[-1.9, 0, -29.2]} />
-      <TransitPrompt position={[-5.2, 1.95, -28.5]} label="Board bus" />
+      {showTransitPrompts && <TransitPrompt position={[-5.2, 1.95, -28.5]} label="Board bus" />}
 
       <group position={[-5.2, 1.95, -26.1]}>
         <HangingSign width={5.1} label="BUS 350 · PARIS" sublabel="Arret bus · Central Paris" />

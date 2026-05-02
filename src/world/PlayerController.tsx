@@ -6,7 +6,7 @@ import type { SceneMode } from '@/shared/contracts';
 import { Character } from '@/world/Character';
 import { PLAYER_COLLIDER_RADIUS } from '@/world/airportLayout';
 import { moveCircleWithColliders } from '@/world/physics';
-import type { WorldLayout, WorldTransitTarget } from '@/world/worldLayout';
+import type { WorldConversationFocus, WorldLayout, WorldTransitTarget } from '@/world/worldLayout';
 
 interface PlayerControllerProps {
   mode: SceneMode;
@@ -15,6 +15,7 @@ interface PlayerControllerProps {
   onNearTransitChange: (target: WorldTransitTarget | null) => void;
   onInteract: () => void;
   onTransitInteract: (target: WorldTransitTarget) => void;
+  conversationFocus?: WorldConversationFocus | null;
 }
 
 const interactRadius = 3.3;
@@ -26,6 +27,7 @@ export function PlayerController({
   onNearTransitChange,
   onInteract,
   onTransitInteract,
+  conversationFocus = null,
 }: PlayerControllerProps) {
   const playerRef = useRef<THREE.Group>(null);
   const visualRef = useRef<THREE.Group>(null);
@@ -38,12 +40,14 @@ export function PlayerController({
   const [, getKeys] = useKeyboardControls();
   const { camera } = useThree();
   const layoutRef = useRef(layout);
+  const conversationFocusRef = useRef(conversationFocus);
 
   const conversationFallbackLook = useMemo(() => new THREE.Vector3(0, 1.55, 0.2), []);
 
   useEffect(() => {
     layoutRef.current = layout;
-  }, [layout]);
+    conversationFocusRef.current = conversationFocus;
+  }, [conversationFocus, layout]);
 
   useEffect(() => {
     lastNear.current = false;
@@ -88,8 +92,20 @@ export function PlayerController({
     if (mode !== 'world') {
       velocity.current.multiplyScalar(0.75);
       setWalkingIfChanged(false);
-      camera.position.lerp(cameraRig.conversationCamera ?? cameraRig.followOffset, 0.08);
-      camera.lookAt(cameraRig.conversationLook ?? npcPosition.clone().add(conversationFallbackLook));
+      const activeFocus = conversationFocusRef.current;
+      const conversationCamera = activeFocus?.camera ?? cameraRig.conversationCamera ?? cameraRig.followOffset;
+      const conversationLook =
+        activeFocus?.look ?? cameraRig.conversationLook ?? npcPosition.clone().add(conversationFallbackLook);
+      camera.position.lerp(conversationCamera, 0.08);
+      camera.lookAt(conversationLook);
+      window.__huskyCameraDebug = {
+        x: camera.position.x,
+        y: camera.position.y,
+        z: camera.position.z,
+        lookX: conversationLook.x,
+        lookY: conversationLook.y,
+        lookZ: conversationLook.z,
+      };
       return;
     }
 
@@ -192,5 +208,6 @@ declare global {
   interface Window {
     __huskyPlayerPosition?: { x: number; y: number; z: number };
     __huskyCollisionDebug?: { blockedX: boolean; blockedZ: boolean; colliderCount: number };
+    __huskyCameraDebug?: { x: number; y: number; z: number; lookX: number; lookY: number; lookZ: number };
   }
 }

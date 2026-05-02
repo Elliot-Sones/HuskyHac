@@ -21,6 +21,11 @@ export interface WorldCameraRig {
   conversationLook?: THREE.Vector3;
 }
 
+export interface WorldConversationFocus {
+  camera: THREE.Vector3;
+  look: THREE.Vector3;
+}
+
 export interface WorldLayout {
   id: string;
   playerStart: [number, number, number];
