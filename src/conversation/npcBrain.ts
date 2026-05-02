@@ -3,6 +3,8 @@ import { createBackboardNpcBrain } from '@/conversation/backboardClient';
 import { createOpenAiNpcBrain } from '@/conversation/openaiClient';
 import type { NpcBrain } from '@/conversation/conversationTypes';
 
+const BACKBOARD_REPLY_TIMEOUT_MS = 900;
+
 export function createDefaultNpcBrain(): NpcBrain {
   const backboard = createBackboardNpcBrain();
   const openai = createOpenAiNpcBrain();
@@ -11,7 +13,11 @@ export function createDefaultNpcBrain(): NpcBrain {
   return {
     async generateReply(request) {
       try {
-        return await backboard.generateReply(request);
+        return await withTimeout(
+          backboard.generateReply(request),
+          BACKBOARD_REPLY_TIMEOUT_MS,
+          'Backboard response timed out.',
+        );
       } catch (error) {
         console.warn('Backboard unavailable; using OpenAI NPC brain.', error);
       }
@@ -24,4 +30,18 @@ export function createDefaultNpcBrain(): NpcBrain {
       }
     },
   };
+}
+
+function withTimeout<T>(promise: Promise<T>, timeoutMs: number, message: string): Promise<T> {
+  let timer: ReturnType<typeof setTimeout> | undefined;
+
+  const timeout = new Promise<never>((_resolve, reject) => {
+    timer = setTimeout(() => reject(new Error(message)), timeoutMs);
+  });
+
+  return Promise.race([promise, timeout]).finally(() => {
+    if (timer) {
+      clearTimeout(timer);
+    }
+  });
 }

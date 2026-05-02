@@ -124,7 +124,11 @@ describe('PlayWorld multiplayer integration', () => {
 
     await clickByAriaLabel('Practice phrase');
     await clickButton(getButtonByText('Go to the Eiffel Tower'));
-    await click('complete-arrival');
+
+    expect(container?.textContent).toContain('Road to the Eiffel Tower');
+    expect(container?.querySelector('[data-testid="complete-arrival"]')).toBeNull();
+
+    await click('complete-ground-travel');
 
     const latestWorldCanvasProps = getLastWorldCanvasProps();
     expect(latestWorldCanvasProps.layout.id).toBe('france-eiffel_tour');
@@ -204,6 +208,7 @@ function makeLessonStore(): LessonStore {
     currentTurn,
     currentResponses: currentTurn.responses,
     selectResponse: vi.fn(),
+    submitResponseOption: vi.fn(async () => {}),
     submitFreeform: vi.fn(),
     recordSpeech: vi.fn(),
     replayLastNpcLine: vi.fn(),

@@ -73,6 +73,61 @@ describe('runNpcConversationTurn', () => {
     expect(result.suggestedResponses[0]?.french).toBe('Ou puis-je acheter un billet ?');
     expect(result.progress).toBe(45);
     expect(result.complete).toBe(false);
-    expect(speechOutput.speak).toHaveBeenCalledWith(result.npcLine, { lang: 'fr-FR' });
+    expect(speechOutput.speak).toHaveBeenCalledWith(result.npcLine, {
+      lang: 'fr-FR',
+      preferBrowser: true,
+    });
+  });
+
+  it('returns the generated NPC text before speech playback finishes', async () => {
+    const brain: NpcBrain = {
+      generateReply: vi.fn(async () => ({
+        npcReply: {
+          text: 'Bien sur. Prenez le taxi.',
+          translation: 'Of course. Take the taxi.',
+        },
+        feedback: {},
+        suggestedResponses: [],
+        scene: {
+          complete: false,
+          reason: 'Continue.',
+          score: 0.45,
+        },
+        memoryFacts: [],
+        source: 'openai' as const,
+      })),
+    };
+    let finishSpeech = () => {};
+    const speechOutput: SpeechOutput = {
+      speak: vi.fn(
+        () =>
+          new Promise<void>((resolve) => {
+            finishSpeech = resolve;
+          }),
+      ),
+      cancel: vi.fn(),
+      isSupported: () => true,
+    };
+    let settled = false;
+
+    const resultPromise = runNpcConversationTurn({
+      scenario: airportFranceScenario,
+      turnIndex: 0,
+      transcript: [airportFranceScenario.turns[0].npcLine],
+      learnerText: 'Je voudrais prendre un taxi.',
+      inputSource: 'typed',
+      brain,
+      speechOutput,
+    }).then((result) => {
+      settled = true;
+      return result;
+    });
+
+    await new Promise((resolve) => setTimeout(resolve, 0));
+
+    expect(settled).toBe(true);
+    expect((await resultPromise).npcLine.text).toBe('Bien sur. Prenez le taxi.');
+
+    finishSpeech();
   });
 });

@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { FRANCE_MULTIPLAYER_ROOM_CODE, type SceneMode } from '@/shared/contracts';
 import { ArrivalTransition } from '@/play/ArrivalTransition';
+import { GroundTravelTransition } from '@/play/GroundTravelTransition';
 import { PlayerEntryMock } from '@/play/PlayerEntryMock';
 import { resolvePlayDestination, type PlayDestination } from '@/play/destinations';
 import { readLocalPlayerProfile, type LocalPlayerProfile } from '@/play/playerProfile';
@@ -18,7 +19,7 @@ import type { WorldTransitTarget } from '@/world/worldLayout';
 
 export function PlayWorld() {
   const [searchParams, setSearchParams] = useSearchParams();
-  const [phase, setPhase] = useState<'entry' | 'arrival' | 'world'>('entry');
+  const [phase, setPhase] = useState<'entry' | 'arrival' | 'ground-travel' | 'world'>('entry');
   const [playerProfile, setPlayerProfile] = useState<LocalPlayerProfile>(() => readLocalPlayerProfile());
   const destination = resolvePlayDestination(
     searchParams.get('destination') ?? searchParams.get('country'),
@@ -26,7 +27,7 @@ export function PlayWorld() {
 
   function handleTravelDestination(destinationId: string) {
     setSearchParams({ destination: destinationId });
-    setPhase('arrival');
+    setPhase('ground-travel');
   }
 
   if (phase === 'entry') {
@@ -43,6 +44,10 @@ export function PlayWorld() {
 
   if (phase === 'arrival') {
     return <ArrivalTransition destination={destination} onComplete={() => setPhase('world')} />;
+  }
+
+  if (phase === 'ground-travel') {
+    return <GroundTravelTransition destination={destination} onComplete={() => setPhase('world')} />;
   }
 
   return (

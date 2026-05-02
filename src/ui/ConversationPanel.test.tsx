@@ -55,6 +55,16 @@ describe('ConversationPanel', () => {
 
     expect(autoPlayLastNpcLine).toHaveBeenCalledTimes(2);
   });
+
+  it('submits clicked suggestion buttons through the fast scripted response path', async () => {
+    const submitResponseOption = vi.fn(async () => {});
+    mocks.useLessonStore.mockReturnValue(makeLessonStore({ submitResponseOption }));
+
+    await renderConversationPanel();
+    await clickButton(getButtonByText('Bonjour, comment puis-je aller au centre-ville ?'));
+
+    expect(submitResponseOption).toHaveBeenCalledWith(airportFranceScenario.turns[0].responses[1]);
+  });
 });
 
 async function renderConversationPanel() {
@@ -87,6 +97,7 @@ function makeLessonStore(overrides: Partial<LessonStore> = {}): LessonStore {
     currentTurn,
     currentResponses: currentTurn.responses,
     selectResponse: vi.fn(),
+    submitResponseOption: vi.fn(async () => {}),
     submitFreeform: vi.fn(),
     recordSpeech: vi.fn(),
     replayLastNpcLine: vi.fn(),
@@ -97,5 +108,18 @@ function makeLessonStore(overrides: Partial<LessonStore> = {}): LessonStore {
     reset: vi.fn(),
   };
 
-  return Object.assign(store, overrides);
+  return Object.assign(store, overrides) as LessonStore;
+}
+
+async function clickButton(button: HTMLButtonElement | null | undefined) {
+  expect(button).not.toBeNull();
+  await act(async () => {
+    button?.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+  });
+}
+
+function getButtonByText(text: string) {
+  return [...(container?.querySelectorAll<HTMLButtonElement>('button') ?? [])].find((button) =>
+    button.textContent?.includes(text),
+  ) ?? null;
 }

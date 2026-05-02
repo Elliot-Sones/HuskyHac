@@ -62,6 +62,7 @@ export interface LessonStore extends LessonState {
   currentTurn: Scenario['turns'][number];
   currentResponses: ResponseOption[];
   selectResponse: (response: ResponseOption) => void;
+  submitResponseOption: (response: ResponseOption) => Promise<void>;
   submitFreeform: (text: string, source?: LearnerInputSource) => Promise<void>;
   recordSpeech: () => Promise<SpeechTranscript | null>;
   replayLastNpcLine: (options?: ReplayNpcLineOptions) => Promise<void>;
@@ -243,12 +244,38 @@ export function LessonProvider({
     [autoPlayNpcLine],
   );
 
+  const submitResponseOption = useMemo(
+    () => async (response: ResponseOption) => {
+      const learnerText = response.french.trim();
+
+      if (!learnerText) {
+        return;
+      }
+
+      const snapshot = stateRef.current;
+      const playerLine = createLearnerTranscriptLine(learnerText, 'suggestion');
+      const result = createScriptedNpcResult({
+        scenario: snapshot.scenario,
+        turnIndex: snapshot.turnIndex,
+        response,
+        playerLine,
+      });
+
+      dispatch({ type: 'select-response', response });
+      dispatch({ type: 'append-player-line', line: playerLine });
+      dispatch({ type: 'apply-npc-result', result });
+      void speakNpcLine(result.npcLine, { immediate: true });
+    },
+    [speakNpcLine],
+  );
+
   const store = useMemo<LessonStore>(
     () => ({
       ...state,
       currentTurn,
       currentResponses: state.dynamicResponses ?? currentTurn.responses,
       selectResponse: (response) => dispatch({ type: 'select-response', response }),
+      submitResponseOption,
       submitFreeform: submitLearnerText,
       recordSpeech,
       replayLastNpcLine,
@@ -267,6 +294,7 @@ export function LessonProvider({
       recordSpeech,
       replayLastNpcLine,
       state,
+      submitResponseOption,
       submitLearnerText,
     ],
   );
@@ -363,4 +391,51 @@ function lessonReducer(state: LessonState, action: LessonAction): LessonState {
     default:
       return state;
   }
+}
+
+function createScriptedNpcResult({
+  scenario,
+  turnIndex,
+  response,
+  playerLine,
+}: {
+  scenario: Scenario;
+  turnIndex: number;
+  response: ResponseOption;
+  playerLine: ScenarioTranscriptLine;
+}): NpcTurnFlowResult {
+  const isFinalTurn = turnIndex >= scenario.turns.length - 1;
+  const nextTurn = scenario.turns[Math.min(turnIndex + 1, scenario.turns.length - 1)];
+  const npcLine = isFinalTurn ? createCompletionNpcLine(scenario.id) : nextTurn.npcLine;
+
+  return {
+    playerLine,
+    npcLine,
+    npcReply: {
+      text: npcLine.text,
+      translation: npcLine.translation,
+    },
+    feedback: {
+      summary: `Good choice: ${response.english}`,
+    },
+    suggestedResponses: isFinalTurn ? [] : nextTurn.responses,
+    scene: {
+      complete: isFinalTurn,
+      reason: isFinalTurn ? 'Scripted route complete.' : 'Scripted route advanced.',
+      score: isFinalTurn ? 1 : (turnIndex + 1) / scenario.turns.length,
+    },
+    memoryFacts: [],
+    progress: isFinalTurn ? 100 : Math.round(((turnIndex + 1) / scenario.turns.length) * 100),
+    complete: isFinalTurn,
+  };
+}
+
+function createCompletionNpcLine(scenarioId: string): ScenarioTranscriptLine {
+  return {
+    id: `npc-scripted-complete-${Date.now()}-${scenarioId}`,
+    speaker: 'npc',
+    text: 'Tres bien, merci. Bonne journee !',
+    translation: 'Very good, thank you. Have a good day!',
+    source: 'scripted',
+  };
 }

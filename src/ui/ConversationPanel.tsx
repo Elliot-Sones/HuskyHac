@@ -145,8 +145,8 @@ export function ConversationPanel() {
             options={lesson.currentResponses}
             selectedId={lesson.selectedResponseId}
             onSelect={(option) => {
-              lesson.selectResponse(option);
               setDraft(option.french);
+              void lesson.submitResponseOption(option);
             }}
           />
         </div>

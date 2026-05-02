@@ -83,6 +83,43 @@ describe('LessonProvider', () => {
       preferBrowser: true,
     });
   });
+
+  it('uses a clicked scripted response to advance immediately without asking the NPC brain', async () => {
+    let store: LessonStore | null = null;
+    const brain = makeNpcBrain();
+    const speechOutput = makeSpeechOutput();
+    const response = airportFranceScenario.turns[0].responses[1];
+
+    await renderLessonProvider({
+      services: {
+        brain,
+        speechInput: makeSpeechInput(),
+        speechOutput,
+      },
+      onStore(nextStore) {
+        store = nextStore;
+      },
+    });
+
+    await act(async () => {
+      await getStore(store).submitResponseOption(response);
+    });
+
+    const updatedStore = getStore(store);
+
+    expect(brain.generateReply).not.toHaveBeenCalled();
+    expect(updatedStore.lastNpcLine?.id).toBe(airportFranceScenario.turns[1].npcLine.id);
+    expect(updatedStore.turnIndex).toBe(1);
+    expect(updatedStore.transcript.at(-2)).toMatchObject({
+      speaker: 'player',
+      text: response.french,
+      source: 'suggestion',
+    });
+    expect(speechOutput.speak).toHaveBeenCalledWith(airportFranceScenario.turns[1].npcLine, {
+      lang: 'fr-FR',
+      preferBrowser: true,
+    });
+  });
 });
 
 async function renderLessonProvider({
@@ -125,6 +162,14 @@ function makeNpcBrain(): NpcBrain {
       memoryFacts: [],
     })),
   };
+}
+
+function getStore(store: LessonStore | null): LessonStore {
+  if (!store) {
+    throw new Error('Lesson store was not mounted.');
+  }
+
+  return store;
 }
 
 function makeSpeechInput(): SpeechInput {

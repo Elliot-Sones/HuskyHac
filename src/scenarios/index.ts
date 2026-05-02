@@ -4,6 +4,10 @@ export {
   type EiffelTowerFranceScenario,
 } from '@/scenarios/eiffelTowerFrance';
 export {
+  parisCoffeeShopScenario,
+  type ParisCoffeeShopScenario,
+} from '@/scenarios/parisCoffeeShop';
+export {
   matchResponseVariant,
   normalizeResponse,
   type ResponseMatch,

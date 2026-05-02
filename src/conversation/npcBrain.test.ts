@@ -1,4 +1,4 @@
-import { describe, expect, it, vi } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 import { airportFranceScenario } from '@/scenarios/airportFrance';
 import type { NpcBrain, NpcBrainReply } from '@/conversation/conversationTypes';
 
@@ -22,6 +22,11 @@ vi.mock('@/conversation/fallbackNpcBrain', () => ({
   createDemoNpcBrain: () => mocks.fallback,
 }));
 
+afterEach(() => {
+  vi.clearAllMocks();
+  vi.useRealTimers();
+});
+
 describe('createDefaultNpcBrain', () => {
   it('tries Backboard first and falls back to OpenAI when Backboard is unavailable', async () => {
     const reply = makeReply('openai');
@@ -42,6 +47,30 @@ describe('createDefaultNpcBrain', () => {
     expect(mocks.backboard.generateReply).toHaveBeenCalledOnce();
     expect(mocks.openai.generateReply).toHaveBeenCalledOnce();
     expect(mocks.fallback.generateReply).not.toHaveBeenCalled();
+  });
+
+  it('falls back to OpenAI when Backboard is too slow', async () => {
+    vi.useFakeTimers();
+    const reply = makeReply('openai');
+    vi.mocked(mocks.backboard.generateReply).mockImplementationOnce(
+      () => new Promise(() => {}),
+    );
+    vi.mocked(mocks.openai.generateReply).mockResolvedValueOnce(reply);
+
+    const { createDefaultNpcBrain } = await import('@/conversation/npcBrain');
+    const brain = createDefaultNpcBrain();
+    const resultPromise = brain.generateReply({
+      scenario: airportFranceScenario,
+      turn: airportFranceScenario.turns[0],
+      transcript: [airportFranceScenario.turns[0].npcLine],
+      learnerText: 'Bonjour.',
+      inputSource: 'typed',
+    });
+
+    await vi.advanceTimersByTimeAsync(1000);
+
+    await expect(resultPromise).resolves.toBe(reply);
+    expect(mocks.openai.generateReply).toHaveBeenCalledOnce();
   });
 });
 

@@ -42,13 +42,13 @@ export async function runNpcConversationTurn({
     translation: reply.npcReply.translation,
     source: reply.source ?? 'openai',
   };
-  let speechError: string | undefined;
 
-  try {
-    await speechOutput.speak(npcLine, { lang: 'fr-FR' });
-  } catch (error) {
-    speechError = error instanceof Error ? error.message : 'Speech output failed.';
-  }
+  void speechOutput.speak(npcLine, {
+    lang: 'fr-FR',
+    preferBrowser: true,
+  }).catch((error) => {
+    console.warn('NPC speech playback failed.', error);
+  });
 
   return {
     ...reply,
@@ -56,7 +56,6 @@ export async function runNpcConversationTurn({
     npcLine,
     progress: Math.round(clamp01(reply.scene.score) * 100),
     complete: reply.scene.complete,
-    speechError,
   };
 }
 
