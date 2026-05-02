@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { MULTIPLAYER_MAX_PLAYERS } from '../../src/shared/contracts';
+import { FRANCE_MULTIPLAYER_ROOM_CODE, MULTIPLAYER_MAX_PLAYERS } from '../../src/shared/contracts';
 import { RoomRegistry } from './RoomRegistry';
 
 function profile(index: number) {
@@ -11,6 +11,17 @@ function profile(index: number) {
 }
 
 describe('RoomRegistry', () => {
+  it('puts every France visitor into one shared room without a visible room code flow', () => {
+    const registry = new RoomRegistry();
+    const first = registry.joinRoom(FRANCE_MULTIPLAYER_ROOM_CODE, profile(1));
+    const second = registry.joinRoom(FRANCE_MULTIPLAYER_ROOM_CODE, profile(2));
+
+    expect(first.room.code).toBe(FRANCE_MULTIPLAYER_ROOM_CODE);
+    expect(second.room.code).toBe(FRANCE_MULTIPLAYER_ROOM_CODE);
+    expect(second.room.players).toHaveLength(2);
+    expect(registry.getRoom(FRANCE_MULTIPLAYER_ROOM_CODE)?.players).toHaveLength(2);
+  });
+
   it('caps rooms at the configured small-room player limit', () => {
     const registry = new RoomRegistry({ roomCodeSeed: () => 'ABCD12' });
     const created = registry.createRoom(profile(1));

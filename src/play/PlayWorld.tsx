@@ -1,11 +1,10 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import type { SceneMode } from '@/shared/contracts';
+import { FRANCE_MULTIPLAYER_ROOM_CODE, type SceneMode } from '@/shared/contracts';
 import { ArrivalTransition } from '@/play/ArrivalTransition';
 import { PlayerEntryMock } from '@/play/PlayerEntryMock';
 import { resolvePlayDestination, type PlayDestination } from '@/play/destinations';
 import { readLocalPlayerProfile, type LocalPlayerProfile } from '@/play/playerProfile';
-import { MultiplayerLobby } from '@/multiplayer/MultiplayerLobby';
 import { MultiplayerProvider, useMultiplayer } from '@/multiplayer/MultiplayerProvider';
 import { LessonProvider, useLessonStore } from '@/state/lessonStore';
 import { ConversationPanel } from '@/ui/ConversationPanel';
@@ -59,6 +58,7 @@ function PlayWorldInner({
 }) {
   const lesson = useLessonStore();
   const multiplayer = useMultiplayer();
+  const requestedSharedRoomRef = useRef(false);
   const [mode, setMode] = useState<SceneMode>('world');
   const [isNearNpc, setIsNearNpc] = useState(false);
   const [nearTransit, setNearTransit] = useState<WorldTransitTarget | null>(null);
@@ -69,6 +69,13 @@ function PlayWorldInner({
     [activeTransit],
   );
   const canvasMode: SceneMode = activeTransitDialogue ? 'conversation' : mode;
+
+  useEffect(() => {
+    if (multiplayer.disabled || requestedSharedRoomRef.current) return;
+
+    requestedSharedRoomRef.current = true;
+    void multiplayer.joinRoom(FRANCE_MULTIPLAYER_ROOM_CODE);
+  }, [multiplayer.disabled, multiplayer.joinRoom]);
 
   useEffect(() => {
     function handleKeyDown(event: KeyboardEvent) {
@@ -110,8 +117,6 @@ function PlayWorldInner({
         remoteSnapshots={multiplayer.remoteSnapshots}
         onPublishSnapshot={multiplayer.publishSnapshot}
       />
-
-      <MultiplayerLobby />
 
       {mode === 'world' && !activeTransitDialogue && (
         <WorldHud

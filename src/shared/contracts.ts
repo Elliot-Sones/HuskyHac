@@ -83,6 +83,7 @@ export interface WorldNpc {
 export const MULTIPLAYER_MAX_PLAYERS = 4;
 export const MULTIPLAYER_ROOM_CODE_LENGTH = 6;
 export const MULTIPLAYER_ROOM_CODE_PATTERN = /^[A-Z0-9]{6}$/;
+export const FRANCE_MULTIPLAYER_ROOM_CODE = 'FRANCE';
 
 export type PlayerAccessory = 'backpack' | 'nametag' | 'scarf' | 'suitcase';
 

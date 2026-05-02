@@ -5,10 +5,14 @@ import { MemoryRouter } from 'react-router-dom';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import type { LocalPlayerProfile } from '@/play/playerProfile';
 import type { LessonStore } from '@/state/lessonStore';
+import { FRANCE_MULTIPLAYER_ROOM_CODE } from '@/shared/contracts';
 import { airportFranceScenario } from '@/scenarios/airportFrance';
 import { PlayWorld } from '@/play/PlayWorld';
+import { RemoteSnapshotStore } from '@/multiplayer/remoteSnapshotStore';
 
 const mocks = vi.hoisted(() => ({
+  joinRoom: vi.fn(async () => {}),
+  publishSnapshot: vi.fn(),
   worldCanvas: vi.fn(() => <div data-testid="world-canvas" />),
 }));
 
@@ -58,8 +62,26 @@ vi.mock('@/world/WorldCanvas', () => ({
   WorldCanvas: mocks.worldCanvas,
 }));
 
-vi.mock('@/multiplayer/MultiplayerLobby', () => ({
-  MultiplayerLobby: () => <section data-testid="multiplayer-lobby" />,
+vi.mock('@/multiplayer/MultiplayerProvider', () => ({
+  MultiplayerProvider: ({ children }: { children: React.ReactNode }) => <>{children}</>,
+  useMultiplayer: () => ({
+    status: 'solo',
+    disabled: false,
+    room: null,
+    self: null,
+    profileDraft: {
+      displayName: 'Ava',
+      color: '#2563eb',
+      accessory: 'backpack',
+    },
+    error: null,
+    remoteSnapshots: new RemoteSnapshotStore(),
+    setProfileDraft: vi.fn(),
+    createRoom: vi.fn(),
+    joinRoom: mocks.joinRoom,
+    leaveRoom: vi.fn(),
+    publishSnapshot: mocks.publishSnapshot,
+  }),
 }));
 
 let root: Root | null = null;
@@ -76,14 +98,16 @@ afterEach(() => {
 });
 
 describe('PlayWorld multiplayer integration', () => {
-  it('shows the multiplayer lobby when the playable world starts', async () => {
+  it('joins the shared France room without rendering a room-code lobby', async () => {
     await renderPlayWorld();
 
     await click('launch-player');
     await click('complete-arrival');
 
     expect(mocks.worldCanvas).toHaveBeenCalled();
-    expect(container?.querySelector('[data-testid="multiplayer-lobby"]')).not.toBeNull();
+    expect(mocks.joinRoom).toHaveBeenCalledWith(FRANCE_MULTIPLAYER_ROOM_CODE);
+    expect(container?.textContent).not.toContain('Airport room');
+    expect(container?.textContent).not.toContain('Create room');
   });
 });
 

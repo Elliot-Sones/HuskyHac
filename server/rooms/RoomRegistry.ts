@@ -1,5 +1,6 @@
 import { randomUUID } from 'node:crypto';
 import {
+  FRANCE_MULTIPLAYER_ROOM_CODE,
   MULTIPLAYER_MAX_PLAYERS,
   MULTIPLAYER_ROOM_CODE_LENGTH,
   type PlayerProfileInput,
@@ -37,7 +38,11 @@ export class RoomRegistry {
 
   joinRoom(roomCode: string, profileInput: PlayerProfileInput): JoinResult {
     const code = normalizeRoomCode(roomCode);
-    const room = this.rooms.get(code);
+    let room = this.rooms.get(code);
+    if (!room && code === FRANCE_MULTIPLAYER_ROOM_CODE) {
+      room = this.createRoomRecord(code);
+      this.rooms.set(room.code, room);
+    }
     if (!room) {
       throw new RoomRegistryError('ROOM_NOT_FOUND', 'Room not found.');
     }
@@ -86,7 +91,18 @@ export class RoomRegistry {
     return room ? serializeRoom(room) : null;
   }
 
-  private createRoomRecord(): RoomRecord {
+  private createRoomRecord(fixedCode?: string): RoomRecord {
+    if (fixedCode) {
+      return {
+        id: this.createId(),
+        code: fixedCode,
+        createdAt: this.getNow(),
+        maxPlayers: MULTIPLAYER_MAX_PLAYERS,
+        players: new Map(),
+        snapshots: new Map(),
+      };
+    }
+
     for (let attempt = 0; attempt < 8; attempt += 1) {
       const code = normalizeRoomCode(this.roomCodeSeed());
       if (!this.rooms.has(code)) {
