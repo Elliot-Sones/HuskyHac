@@ -10,6 +10,7 @@ import type {
 } from '@/conversation/conversationTypes';
 import { airportFranceScenario } from '@/scenarios/airportFrance';
 import { LessonProvider, type LessonStore, useLessonStore } from '@/state/lessonStore';
+import { TRANSIT_DIALOGUES } from '@/world/transitDialogues';
 
 (globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT =
   true;
@@ -50,6 +51,34 @@ describe('LessonProvider', () => {
 
     expect(speechOutput.speak).toHaveBeenCalledTimes(1);
     expect(speechOutput.speak).toHaveBeenCalledWith(airportFranceScenario.turns[0].npcLine, {
+      lang: 'fr-FR',
+      preferBrowser: true,
+    });
+  });
+
+  it('auto-plays an arbitrary transit NPC line once with immediate browser-preferred speech', async () => {
+    let store: LessonStore | null = null;
+    const speechOutput = makeSpeechOutput();
+    const transitLine = TRANSIT_DIALOGUES.taxi.opening;
+
+    await renderLessonProvider({
+      services: {
+        brain: makeNpcBrain(),
+        speechInput: makeSpeechInput(),
+        speechOutput,
+      },
+      onStore(nextStore) {
+        store = nextStore;
+      },
+    });
+
+    await act(async () => {
+      await store?.autoPlayNpcLine(transitLine, { immediate: true });
+      await store?.autoPlayNpcLine(transitLine, { immediate: true });
+    });
+
+    expect(speechOutput.speak).toHaveBeenCalledTimes(1);
+    expect(speechOutput.speak).toHaveBeenCalledWith(transitLine, {
       lang: 'fr-FR',
       preferBrowser: true,
     });

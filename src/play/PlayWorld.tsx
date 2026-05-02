@@ -97,7 +97,13 @@ function PlayWorldInner({
           setActiveTransit(null);
           setMode('conversation');
         }}
-        onTransitInteract={(target) => setActiveTransit(target)}
+        onTransitInteract={(target) => {
+          const dialogue = getTransitDialogue(target.id);
+          if (dialogue) {
+            void lesson.autoPlayNpcLine(dialogue.opening, { immediate: true });
+          }
+          setActiveTransit(target);
+        }}
         conversationFocus={activeTransitFocus}
         playerProfile={playerProfile}
       />

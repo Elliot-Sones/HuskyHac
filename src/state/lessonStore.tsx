@@ -65,6 +65,7 @@ export interface LessonStore extends LessonState {
   submitFreeform: (text: string, source?: LearnerInputSource) => Promise<void>;
   recordSpeech: () => Promise<SpeechTranscript | null>;
   replayLastNpcLine: (options?: ReplayNpcLineOptions) => Promise<void>;
+  autoPlayNpcLine: (line: ScenarioTranscriptLine, options?: ReplayNpcLineOptions) => Promise<void>;
   autoPlayLastNpcLine: (options?: ReplayNpcLineOptions) => Promise<void>;
   toggleListening: () => void;
   setStatus: (status: ConversationStatus) => void;
@@ -188,14 +189,8 @@ export function LessonProvider({
     [resolvedServices.speechInput, submitLearnerText],
   );
 
-  const replayLastNpcLine = useMemo(
-    () => async (options: ReplayNpcLineOptions = {}) => {
-      const line = stateRef.current.lastNpcLine;
-
-      if (!line) {
-        return;
-      }
-
+  const speakNpcLine = useMemo(
+    () => async (line: ScenarioTranscriptLine, options: ReplayNpcLineOptions = {}) => {
       dispatch({ type: 'set-status', status: 'speaking' });
       try {
         await resolvedServices.speechOutput.speak(line, {
@@ -216,18 +211,42 @@ export function LessonProvider({
     [resolvedServices.speechOutput],
   );
 
-  const autoPlayLastNpcLine = useMemo(
+  const replayLastNpcLine = useMemo(
     () => async (options: ReplayNpcLineOptions = {}) => {
       const line = stateRef.current.lastNpcLine;
 
-      if (!line || autoPlayedLineIdsRef.current.has(line.id)) {
+      if (!line) {
+        return;
+      }
+
+      await speakNpcLine(line, options);
+    },
+    [speakNpcLine],
+  );
+
+  const autoPlayNpcLine = useMemo(
+    () => async (line: ScenarioTranscriptLine, options: ReplayNpcLineOptions = {}) => {
+      if (autoPlayedLineIdsRef.current.has(line.id)) {
         return;
       }
 
       autoPlayedLineIdsRef.current.add(line.id);
-      await replayLastNpcLine(options);
+      await speakNpcLine(line, options);
     },
-    [replayLastNpcLine],
+    [speakNpcLine],
+  );
+
+  const autoPlayLastNpcLine = useMemo(
+    () => async (options: ReplayNpcLineOptions = {}) => {
+      const line = stateRef.current.lastNpcLine;
+
+      if (!line) {
+        return;
+      }
+
+      await autoPlayNpcLine(line, options);
+    },
+    [autoPlayNpcLine],
   );
 
   const store = useMemo<LessonStore>(
@@ -239,6 +258,7 @@ export function LessonProvider({
       submitFreeform: submitLearnerText,
       recordSpeech,
       replayLastNpcLine,
+      autoPlayNpcLine,
       autoPlayLastNpcLine,
       toggleListening: () => {
         void recordSpeech();
@@ -249,7 +269,15 @@ export function LessonProvider({
         dispatch({ type: 'reset' });
       },
     }),
-    [autoPlayLastNpcLine, currentTurn, recordSpeech, replayLastNpcLine, state, submitLearnerText],
+    [
+      autoPlayLastNpcLine,
+      autoPlayNpcLine,
+      currentTurn,
+      recordSpeech,
+      replayLastNpcLine,
+      state,
+      submitLearnerText,
+    ],
   );
 
   return <LessonStoreContext.Provider value={store}>{children}</LessonStoreContext.Provider>;

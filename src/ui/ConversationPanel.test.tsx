@@ -75,6 +75,7 @@ function makeLessonStore(overrides: Partial<LessonStore> = {}): LessonStore {
     submitFreeform: vi.fn(),
     recordSpeech: vi.fn(),
     replayLastNpcLine: vi.fn(),
+    autoPlayNpcLine: vi.fn(),
     autoPlayLastNpcLine: vi.fn(),
     toggleListening: vi.fn(),
     setStatus: vi.fn(),

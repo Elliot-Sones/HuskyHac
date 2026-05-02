@@ -29,6 +29,7 @@ type Props = {
 export function GlobeCanvas({ selected, pin, onPickCountry }: Props) {
   const globeRef = useRef<any>(null);
   const hostRef = useRef<HTMLDivElement>(null);
+  const hasFlownInRef = useRef(false);
   const [features, setFeatures] = useState<Feature[]>([]);
   const [hovered, setHovered] = useState<string | null>(null);
   const [size, setSize] = useState({ w: window.innerWidth, h: window.innerHeight });
@@ -102,14 +103,22 @@ export function GlobeCanvas({ selected, pin, onPickCountry }: Props) {
     return () => evs.forEach((ev) => el.removeEventListener(ev, stop));
   }, []);
 
-  // When selection changes, pan camera to the pin centroid (or resume rotation).
+  // When selection changes, gently re-aim the camera. The first pick does a
+  // single fly-in; later picks only re-aim lat/lng at the user's current zoom
+  // so they can keep dragging/zooming to change their mind.
   useEffect(() => {
     const g = globeRef.current;
     if (!g) return;
     const controls = g.controls();
     if (selected && pin) {
       controls.autoRotate = false;
-      g.pointOfView({ lat: pin.lat, lng: pin.lng, altitude: 1.65 }, 1100);
+      const current = g.pointOfView();
+      if (!hasFlownInRef.current) {
+        g.pointOfView({ lat: pin.lat, lng: pin.lng, altitude: 1.85 }, 1100);
+        hasFlownInRef.current = true;
+      } else {
+        g.pointOfView({ lat: pin.lat, lng: pin.lng, altitude: current.altitude }, 600);
+      }
     } else {
       controls.autoRotate = true;
     }
