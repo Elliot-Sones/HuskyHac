@@ -28,6 +28,7 @@ export function LandingPage() {
     const iso = (feature?.properties?.ISO_A2 as string | undefined) ?? null;
     const flag = supported?.flag ?? teaser?.flag ?? flagFromIsoA2(iso);
     const [lng, lat] = supported ? supported.centroid : featureCentroid(feature);
+    setIntroMode(false);
     setPin({ lat, lng, flag });
     setSelection({
       name,
@@ -77,7 +78,7 @@ export function LandingPage() {
       <div className="vignette" />
 
       <TopNav />
-      <HeroTitle active={introMode} onExplore={() => setIntroMode(false)} />
+      {introMode && <HeroTitle active={introMode} onExplore={() => setIntroMode(false)} />}
 
       <CountryChip
         visible={!!selection}
@@ -95,7 +96,7 @@ export function LandingPage() {
         <span className="opacity-30">to zoom</span>
       </div>
       <div className="hint fixed bottom-7 right-8 sm:right-12 z-20 text-[11px] text-slate-500 font-mono">
-        v0.1 · landing
+        v0.2 · landing
       </div>
 
       <StartCTA
