@@ -3,7 +3,6 @@ import { TranslationTooltip } from '@/ui/TranslationTooltip';
 
 const SPEAKER_STYLES = {
   npc: {
-    label: 'Mme. Laurent',
     accent: 'bg-sky-300',
     panel: 'border-white/10 bg-white/[0.055]',
     text: 'text-slate-50',
@@ -22,15 +21,21 @@ const SPEAKER_STYLES = {
   },
 } as const;
 
-export function TranscriptLine({ line }: { line: ScenarioTranscriptLine }) {
+interface TranscriptLineProps {
+  line: ScenarioTranscriptLine;
+  npcName?: string;
+}
+
+export function TranscriptLine({ line, npcName = 'NPC' }: TranscriptLineProps) {
   const style = SPEAKER_STYLES[line.speaker];
+  const speakerLabel = line.speaker === 'npc' ? npcName : SPEAKER_STYLES[line.speaker].label;
 
   return (
     <article className={`rounded-2xl border px-4 py-3 ${style.panel}`}>
       <div className="mb-2 flex items-center gap-2">
         <span className={`h-2 w-2 rounded-full ${style.accent}`} />
         <span className="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-300/70">
-          {style.label}
+          {speakerLabel}
         </span>
       </div>
 

@@ -57,6 +57,9 @@ export function GlobeCanvas({ selected, pin, onPickCountry }: Props) {
   const onPickRef = useRef(onPickCountry);
   const [features, setFeatures] = useState<Feature[]>([]);
   const [size, setSize] = useState({ w: window.innerWidth, h: window.innerHeight });
+  const [debugLog, setDebugLog] = useState<string[]>([]);
+  const pushLog = (line: string) =>
+    setDebugLog((prev) => [...prev.slice(-5), line]);
 
   const oceanMaterial = useMemo(
     () => new THREE.MeshBasicMaterial({ color: new THREE.Color(OCEAN) }),
@@ -218,7 +221,9 @@ export function GlobeCanvas({ selected, pin, onPickCountry }: Props) {
           }
         }}
         onPolygonClick={(p: any) => {
-          console.log('[GlobeCanvas] onPolygonClick', p?.properties?.ADMIN, p);
+          const name = p?.properties?.ADMIN ?? '(none)';
+          console.log('[GlobeCanvas] onPolygonClick', name, p);
+          pushLog(`click: ${name}`);
           if (!p) return;
           onPickRef.current(p.properties.ADMIN as string, p);
         }}

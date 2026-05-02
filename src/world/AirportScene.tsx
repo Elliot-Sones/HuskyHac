@@ -1,13 +1,8 @@
 import { Html, Text } from '@react-three/drei';
-import type { ConversationStatus, SceneMode } from '@/shared/contracts';
+import type { SceneMode } from '@/shared/contracts';
 import { BackgroundTraveler } from '@/world/BackgroundTraveler';
 import { Character } from '@/world/Character';
-
-interface AirportSceneProps {
-  mode: SceneMode;
-  isNearNpc: boolean;
-  conversationStatus: ConversationStatus;
-}
+import type { WorldSceneProps } from '@/world/worldLayout';
 
 const signBlue = '#15236f';
 const airportYellow = '#f6d65b';
@@ -16,7 +11,7 @@ const glass = '#cfe1ee';
 const wallPanel = '#ded8cf';
 const metal = '#64748b';
 
-export function AirportScene({ mode, isNearNpc, conversationStatus }: AirportSceneProps) {
+export function AirportScene({ mode, isNearNpc, conversationStatus, npc }: WorldSceneProps) {
   const talking = mode === 'conversation' && conversationStatus === 'speaking';
 
   return (
@@ -32,7 +27,7 @@ export function AirportScene({ mode, isNearNpc, conversationStatus }: AirportSce
       <TerminalWalls />
       <RearTaxiExterior mode={mode} />
       <FloorWayfinding />
-      <InformationDesk mode={mode} talking={talking} isNearNpc={isNearNpc} />
+      <InformationDesk mode={mode} talking={talking} isNearNpc={isNearNpc} npcName={npc.name} />
       <ArrivalBoard />
       <BaggageAndProps />
       <QueueRopes />
@@ -438,10 +433,12 @@ function InformationDesk({
   mode,
   talking,
   isNearNpc,
+  npcName,
 }: {
   mode: SceneMode;
   talking: boolean;
   isNearNpc: boolean;
+  npcName: string;
 }) {
   return (
     <group position={[4.7, 0, -4.2]}>
@@ -485,7 +482,7 @@ function InformationDesk({
 
       <Html position={[0, 2.72, 0.25]} center distanceFactor={9} style={{ pointerEvents: 'none' }}>
         <div className="airport-nameplate">
-          Mme. Laurent · Information
+          {npcName} · Information
         </div>
       </Html>
 
@@ -493,7 +490,7 @@ function InformationDesk({
         <Html position={[0, 2.2, 0.35]} center distanceFactor={9} style={{ pointerEvents: 'none' }}>
           <div className="airport-interact">
             <span>E</span>
-            Talk to her
+            Talk
           </div>
         </Html>
       )}

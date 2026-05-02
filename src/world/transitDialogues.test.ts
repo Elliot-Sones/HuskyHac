@@ -20,12 +20,12 @@ describe('transit dialogues', () => {
     expect(getTransitDialogue('bus')?.goal).toMatch(/bus/i);
   });
 
-  it('offers Eiffel Tower requests from airport transit conversations', () => {
-    expect(getTransitDialogue('taxi')?.responses.some((response) => /tour eiffel/i.test(response.french))).toBe(
-      true,
-    );
-    expect(getTransitDialogue('bus')?.responses.some((response) => /tour eiffel/i.test(response.french))).toBe(
-      true,
-    );
+  it('motivates traveling onward to Café Bisset from airport transit conversations', () => {
+    expect(
+      getTransitDialogue('taxi')?.responses.every((response) => /cafe|marais/i.test(response.french)),
+    ).toBe(true);
+    expect(
+      getTransitDialogue('bus')?.responses.every((response) => /cafe|marais/i.test(response.french)),
+    ).toBe(true);
   });
 });

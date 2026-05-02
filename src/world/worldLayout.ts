@@ -1,5 +1,5 @@
 import * as THREE from 'three';
-import type { ConversationStatus, SceneMode } from '@/shared/contracts';
+import type { ConversationStatus, NpcProfile, SceneMode } from '@/shared/contracts';
 import type { Vec2, WorldBounds, WorldCollider } from '@/world/physics';
 
 export interface WorldTransitTarget {
@@ -49,4 +49,5 @@ export interface WorldSceneProps {
   mode: SceneMode;
   isNearNpc: boolean;
   conversationStatus: ConversationStatus;
+  npc: NpcProfile;
 }

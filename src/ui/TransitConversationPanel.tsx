@@ -15,7 +15,7 @@ interface TransitConversationPanelProps {
   onTravelDestination?: (destinationId: string) => void;
 }
 
-const EIFFEL_TOWER_DESTINATION_ID = 'france-eiffel_tour';
+const COFFEE_SHOP_DESTINATION_ID = 'france-coffee_shop';
 
 export function TransitConversationPanel({
   dialogue,
@@ -36,7 +36,6 @@ export function TransitConversationPanel({
   const [showTyping, setShowTyping] = useState(false);
   const [isListening, setIsListening] = useState(false);
   const [speechError, setSpeechError] = useState<string | null>(null);
-  const eiffelTowerRequested = practiced && isEiffelTowerRequest(draft);
   const speechInputSupported = Boolean(lesson.speechInputSupported && speechInput.isSupported());
 
   useEffect(() => {
@@ -54,7 +53,7 @@ export function TransitConversationPanel({
   function chooseResponse(response: ResponseOption) {
     setSelected(response);
     setDraft(response.french);
-    setPracticed(isEiffelTowerRequest(response.french));
+    setPracticed(true);
     setSpeechError(null);
   }
 
@@ -177,13 +176,13 @@ export function TransitConversationPanel({
                   <span className="font-semibold text-emerald-50">{draft}</span>
                   <span className="ml-2 text-emerald-50/60">{selected.english}</span>
                 </div>
-                {eiffelTowerRequested && onTravelDestination && (
+                {onTravelDestination && (
                   <button
                     type="button"
-                    onClick={() => onTravelDestination(EIFFEL_TOWER_DESTINATION_ID)}
+                    onClick={() => onTravelDestination(COFFEE_SHOP_DESTINATION_ID)}
                     className="shrink-0 rounded-xl bg-white px-4 py-2 text-[12px] font-black text-slate-950 shadow-lg shadow-white/10 transition hover:bg-emerald-100"
                   >
-                    Go to the Eiffel Tower
+                    Continue to Café Bisset
                   </button>
                 )}
               </div>
@@ -257,10 +256,6 @@ export function TransitConversationPanel({
       </div>
     </div>
   );
-}
-
-function isEiffelTowerRequest(text: string) {
-  return /\b(?:eiffel|tour eiffel)\b/i.test(text.normalize('NFD').replace(/[\u0300-\u036f]/g, ''));
 }
 
 function VoiceButton({

@@ -117,6 +117,7 @@ function PlayWorldInner({
         mode={canvasMode}
         layout={destination.layout}
         Scene={destination.Scene}
+        npc={lesson.scenario.npc}
         isNearNpc={isNearNpc}
         conversationStatus={activeTransitDialogue ? 'idle' : lesson.status}
         onNearNpcChange={setIsNearNpc}

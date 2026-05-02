@@ -2,7 +2,13 @@ import { Suspense } from 'react';
 import type { ComponentType } from 'react';
 import { Canvas } from '@react-three/fiber';
 import { Environment, KeyboardControls, Loader, PerspectiveCamera } from '@react-three/drei';
-import type { ConversationStatus, PlayerSnapshot, RoomState, SceneMode } from '@/shared/contracts';
+import type {
+  ConversationStatus,
+  NpcProfile,
+  PlayerSnapshot,
+  RoomState,
+  SceneMode,
+} from '@/shared/contracts';
 import type { LocalPlayerProfile } from '@/play/playerProfile';
 import type { RemoteSnapshotStore } from '@/multiplayer/remoteSnapshotStore';
 import { PlayerController } from '@/world/PlayerController';
@@ -18,6 +24,7 @@ interface WorldCanvasProps {
   mode: SceneMode;
   layout: WorldLayout;
   Scene: ComponentType<WorldSceneProps>;
+  npc: NpcProfile;
   isNearNpc: boolean;
   conversationStatus: ConversationStatus;
   onNearNpcChange: (near: boolean) => void;
@@ -44,6 +51,7 @@ export function WorldCanvas({
   mode,
   layout,
   Scene,
+  npc,
   isNearNpc,
   conversationStatus,
   onNearNpcChange,
@@ -93,6 +101,7 @@ export function WorldCanvas({
               mode={mode}
               isNearNpc={isNearNpc}
               conversationStatus={conversationStatus}
+              npc={npc}
             />
             <PlayerController
               key={layout.id}

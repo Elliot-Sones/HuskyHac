@@ -12,9 +12,9 @@ export interface TransitDialogue {
 export const TRANSIT_DIALOGUES: Record<string, TransitDialogue> = {
   taxi: {
     targetId: 'taxi',
-    goal: 'Talk to the taxi driver and ask for a ride into Paris.',
+    goal: 'Ask the taxi driver to take you to Café Bisset in Le Marais.',
     personality:
-      'Friendly Parisian taxi driver. Speaks plainly, confirms destinations, and quotes ride prices in euros.',
+      'Friendly Parisian taxi driver. Confirms café and Marais addresses, repeats street names, and quotes ride prices in euros.',
     npc: {
       id: 'taxi-driver-karim',
       name: 'Taxi driver Karim',
@@ -38,31 +38,31 @@ export const TRANSIT_DIALOGUES: Record<string, TransitDialogue> = {
     },
     responses: [
       {
-        id: 'taxi-hotel',
+        id: 'taxi-cafe-easy',
         label: 'easy',
-        french: 'Bonjour, je vais a mon hotel.',
-        english: 'Hello, I am going to my hotel.',
+        french: 'Au cafe Bisset, s il vous plait.',
+        english: 'To Café Bisset, please.',
       },
       {
-        id: 'taxi-central-paris',
+        id: 'taxi-cafe-marais',
         label: 'natural',
-        french: 'Bonjour, je voudrais aller a la Tour Eiffel.',
-        english: 'Hello, I would like to go to the Eiffel Tower.',
+        french: 'Bonjour, je voudrais aller au cafe Bisset, dans le Marais.',
+        english: 'Hello, I would like to go to Café Bisset in Le Marais.',
         recommended: true,
       },
       {
-        id: 'taxi-price',
+        id: 'taxi-cafe-price',
         label: 'challenge',
-        french: 'Combien coute le trajet jusqu au centre-ville ?',
-        english: 'How much is the ride to downtown?',
+        french: 'Combien coute le trajet jusqu au cafe Bisset dans le Marais ?',
+        english: 'How much is the ride to Café Bisset in Le Marais?',
       },
     ],
   },
   bus: {
     targetId: 'bus',
-    goal: 'Talk to the bus agent and ask which bus goes toward Paris.',
+    goal: 'Ask the bus agent which bus goes near Café Bisset in Le Marais.',
     personality:
-      'Patient airport bus agent. Repeats route numbers slowly and explains where to buy tickets.',
+      'Patient airport bus agent. Helps travelers reach Le Marais cafés, repeats route numbers slowly, and explains where to buy a ticket.',
     npc: {
       id: 'bus-agent-camille',
       name: 'Bus agent Camille',
@@ -86,23 +86,23 @@ export const TRANSIT_DIALOGUES: Record<string, TransitDialogue> = {
     },
     responses: [
       {
-        id: 'bus-paris',
+        id: 'bus-cafe-easy',
         label: 'easy',
-        french: 'Bonjour, je cherche le bus pour Paris.',
-        english: 'Hello, I am looking for the bus to Paris.',
+        french: 'Le bus pour le Marais, s il vous plait.',
+        english: 'The bus to Le Marais, please.',
       },
       {
-        id: 'bus-central-paris',
+        id: 'bus-cafe-marais',
         label: 'natural',
-        french: 'Quel bus va a la Tour Eiffel ?',
-        english: 'Which bus goes to the Eiffel Tower?',
+        french: 'Quel bus va au cafe Bisset, dans le Marais ?',
+        english: 'Which bus goes to Café Bisset in Le Marais?',
         recommended: true,
       },
       {
-        id: 'bus-ticket',
+        id: 'bus-cafe-ticket',
         label: 'challenge',
-        french: 'Ou puis-je acheter un billet pour le bus ?',
-        english: 'Where can I buy a bus ticket?',
+        french: 'Ou puis-je acheter un billet pour aller au Marais ?',
+        english: 'Where can I buy a ticket to Le Marais?',
       },
     ],
   },

@@ -10,7 +10,7 @@ const mocks = vi.hoisted(() => ({
   speechInput: {
     isSupported: vi.fn(() => true),
     listen: vi.fn(async () => ({
-      text: 'Je voudrais aller a la Tour Eiffel.',
+      text: 'Je voudrais aller au cafe Bisset.',
       confidence: 0.98,
       source: 'speech' as const,
     })),
@@ -67,7 +67,7 @@ describe('TransitConversationPanel', () => {
     });
   });
 
-  it('shows an Eiffel Tower travel action after practicing an Eiffel Tower request', async () => {
+  it('shows the café travel action after the player practices any phrase', async () => {
     const onTravelDestination = vi.fn();
     mocks.useLessonStore.mockReturnValue({
       autoPlayNpcLine: vi.fn(async () => {}),
@@ -78,24 +78,24 @@ describe('TransitConversationPanel', () => {
     await renderTransitConversationPanel({ onTravelDestination });
     await clickByAriaLabel('Practice phrase');
 
-    const travelButton = getButtonByText('Go to the Eiffel Tower');
+    const travelButton = getButtonByText('Continue to Café Bisset');
     expect(travelButton).not.toBeNull();
 
     await clickButton(travelButton);
 
-    expect(onTravelDestination).toHaveBeenCalledWith('france-eiffel_tour');
+    expect(onTravelDestination).toHaveBeenCalledWith('france-coffee_shop');
   });
 
-  it('shows the Eiffel Tower travel action when the user clicks the Eiffel text option', async () => {
+  it('shows the café travel action when the user clicks any text option', async () => {
     mocks.useLessonStore.mockReturnValue(createLessonStoreMock());
 
     await renderTransitConversationPanel();
-    await clickButton(getButtonByText('Tour Eiffel'));
+    await clickButton(getButtonByText('Café Bisset'));
 
-    expect(getButtonByText('Go to the Eiffel Tower')).not.toBeNull();
+    expect(getButtonByText('Continue to Café Bisset')).not.toBeNull();
   });
 
-  it('shows the Eiffel Tower travel action when the user says an Eiffel Tower request', async () => {
+  it('shows the café travel action when the user answers by voice', async () => {
     mocks.useLessonStore.mockReturnValue(createLessonStoreMock());
 
     await renderTransitConversationPanel();
@@ -106,7 +106,7 @@ describe('TransitConversationPanel', () => {
       languageName: 'French',
       transcriptionLanguage: 'fr',
     });
-    expect(getButtonByText('Go to the Eiffel Tower')).not.toBeNull();
+    expect(getButtonByText('Continue to Café Bisset')).not.toBeNull();
   });
 });
 

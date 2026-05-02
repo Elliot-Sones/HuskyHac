@@ -7,9 +7,12 @@ interface GroundTravelTransitionProps {
 }
 
 export function GroundTravelTransition({ destination, onComplete }: GroundTravelTransitionProps) {
-  const title = destination.id === 'france-eiffel_tour'
-    ? 'Road to the Eiffel Tower'
-    : `Road to ${destination.scenario.terminal}`;
+  const title =
+    destination.id === 'france-coffee_shop'
+      ? 'Road to Café Bisset'
+      : destination.id === 'france-eiffel_tour'
+        ? 'Road to the Eiffel Tower'
+        : `Road to ${destination.scenario.terminal}`;
 
   useEffect(() => {
     const timer = window.setTimeout(onComplete, 3200);
