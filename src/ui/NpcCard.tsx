@@ -12,7 +12,7 @@ export function NpcCard({ npc, personality }: NpcCardProps) {
     .slice(0, 2)
     .map((part) => part[0]?.toUpperCase() ?? '')
     .join('');
-  const description = trimPersona(personality, npc.name) ?? npc.role;
+  const description = trimPersona(personality, npc.name) ?? npc.locationLabel;
 
   return (
     <div className="flex max-w-sm items-start gap-3 rounded-3xl border border-white/10 bg-slate-950/70 px-4 py-3 shadow-2xl shadow-black/40 backdrop-blur-2xl">

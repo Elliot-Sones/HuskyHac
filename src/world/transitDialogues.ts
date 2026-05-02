@@ -4,6 +4,7 @@ export interface TransitDialogue {
   targetId: string;
   npc: NpcProfile;
   goal: string;
+  personality?: string;
   opening: TranscriptLine;
   responses: ResponseOption[];
 }
@@ -12,6 +13,8 @@ export const TRANSIT_DIALOGUES: Record<string, TransitDialogue> = {
   taxi: {
     targetId: 'taxi',
     goal: 'Talk to the taxi driver and ask for a ride into Paris.',
+    personality:
+      'Friendly Parisian taxi driver. Speaks plainly, confirms destinations, and quotes ride prices in euros.',
     npc: {
       id: 'taxi-driver-karim',
       name: 'Taxi driver Karim',
@@ -58,6 +61,8 @@ export const TRANSIT_DIALOGUES: Record<string, TransitDialogue> = {
   bus: {
     targetId: 'bus',
     goal: 'Talk to the bus agent and ask which bus goes toward Paris.',
+    personality:
+      'Patient airport bus agent. Repeats route numbers slowly and explains where to buy tickets.',
     npc: {
       id: 'bus-agent-camille',
       name: 'Bus agent Camille',
