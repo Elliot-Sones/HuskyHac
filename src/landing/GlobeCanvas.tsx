@@ -128,10 +128,16 @@ export function GlobeCanvas({ selected, pin, onPickCountry }: Props) {
   // (selected/hovered) change, so re-set them to themselves to force a refresh.
   useEffect(() => {
     const g = globeRef.current;
-    if (!g) return;
-    g.polygonAltitude(g.polygonAltitude());
-    g.polygonCapColor(g.polygonCapColor());
-  }, [selected, hovered]);
+    if (!g || features.length === 0) return;
+    try {
+      const altAcc = g.polygonAltitude();
+      const colorAcc = g.polygonCapColor();
+      if (altAcc) g.polygonAltitude(altAcc);
+      if (colorAcc) g.polygonCapColor(colorAcc);
+    } catch {
+      // globe may not be fully initialized yet
+    }
+  }, [selected, hovered, features.length]);
 
   const labelHtml = useMemo(
     () => (d: Feature) => {

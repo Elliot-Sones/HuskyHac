@@ -3,6 +3,7 @@ import { airportFranceScenario } from '@/scenarios/airportFrance';
 import { runNpcConversationTurn } from '@/conversation/conversationFlow';
 import type { NpcBrain, SpeechOutput } from '@/conversation/conversationTypes';
 import type { ResponseOption } from '@/shared/contracts';
+import { resolvePlayDestination } from '@/play/destinations';
 
 describe('runNpcConversationTurn', () => {
   it('uses the learner transcript, asks the NPC brain for a French reply, and speaks it aloud', async () => {
@@ -129,5 +130,48 @@ describe('runNpcConversationTurn', () => {
     expect((await resultPromise).npcLine.text).toBe('Bien sur. Prenez le taxi.');
 
     finishSpeech();
+  });
+
+  it('speaks NPC replies with the selected scenario language', async () => {
+    const spanishScenario = resolvePlayDestination('airport-spain').scenario;
+    const brain: NpcBrain = {
+      generateReply: vi.fn(async () => ({
+        npcReply: {
+          text: 'Claro. Siga los carteles hacia el tren.',
+          translation: 'Of course. Follow the signs toward the train.',
+        },
+        feedback: {},
+        suggestedResponses: [],
+        scene: {
+          complete: false,
+          reason: 'Continue.',
+          score: 0.45,
+        },
+        memoryFacts: [],
+        source: 'openai' as const,
+      })),
+    };
+    const speechOutput: SpeechOutput = {
+      speak: vi.fn(async () => undefined),
+      cancel: vi.fn(),
+      isSupported: () => true,
+    };
+
+    const result = await runNpcConversationTurn({
+      scenario: spanishScenario,
+      turnIndex: 0,
+      transcript: [spanishScenario.turns[0].npcLine],
+      learnerText: 'Quiero ir al centro.',
+      inputSource: 'typed',
+      brain,
+      speechOutput,
+    });
+
+    expect(speechOutput.speak).toHaveBeenCalledWith(result.npcLine, {
+      lang: 'es-ES',
+      languageName: 'Spanish',
+      transcriptionLanguage: 'es',
+      preferBrowser: true,
+    });
   });
 });
