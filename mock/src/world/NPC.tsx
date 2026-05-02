@@ -3,7 +3,7 @@ import { useGameStore } from "../store/gameStore";
 import { Character } from "./Character";
 
 export function NPC() {
-  const isNear = useGameStore((s) => s.isNearNPC);
+  const isNear = useGameStore((s) => s.proximityTarget === "info");
   const mode = useGameStore((s) => s.mode);
   const npcState = useGameStore((s) => s.npcState);
   const talking = mode === "conversation" && npcState === "speaking";

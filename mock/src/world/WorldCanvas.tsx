@@ -2,8 +2,11 @@ import { Canvas } from "@react-three/fiber";
 import { Suspense } from "react";
 import { KeyboardControls, Loader, PerspectiveCamera, Environment } from "@react-three/drei";
 import { AirportScene } from "./AirportScene";
+import { TaxiScene } from "./TaxiScene";
+import { Taxi } from "./Taxi";
 import { Player } from "./Player";
 import { NPC } from "./NPC";
+import { useGameStore } from "../store/gameStore";
 
 const keyMap = [
   { name: "forward", keys: ["ArrowUp", "w", "W"] },
@@ -12,6 +15,18 @@ const keyMap = [
   { name: "right", keys: ["ArrowRight", "d", "D"] },
   { name: "run", keys: ["Shift"] },
 ];
+
+function SceneSwitch() {
+  const scene = useGameStore((s) => s.scene);
+  if (scene === "taxi") return <TaxiScene />;
+  return (
+    <>
+      <AirportScene />
+      <Taxi />
+      <NPC />
+    </>
+  );
+}
 
 export function WorldCanvas() {
   return (
@@ -23,11 +38,9 @@ export function WorldCanvas() {
           camera={{ position: [0, 6, 12], fov: 55 }}
           dpr={[1, 2]}
         >
-          {/* IMMEDIATE BACKGROUND — outside Suspense so we never get a black canvas */}
           <color attach="background" args={["#dde3ec"]} />
           <fog attach="fog" args={["#dfe4ec", 22, 60]} />
           <PerspectiveCamera makeDefault fov={55} position={[0, 6, 12]} />
-          {/* basic lighting outside Suspense, in case Environment fails */}
           <ambientLight intensity={0.7} />
           <directionalLight
             position={[8, 14, 6]}
@@ -40,16 +53,13 @@ export function WorldCanvas() {
             shadow-camera-bottom={-20}
           />
 
-          {/* Environment is a separate Suspense boundary so failure here doesn't kill the scene */}
           <Suspense fallback={null}>
             <Environment preset="lobby" />
           </Suspense>
 
-          {/* Scene + characters */}
           <Suspense fallback={null}>
-            <AirportScene />
+            <SceneSwitch />
             <Player />
-            <NPC />
           </Suspense>
         </Canvas>
       </KeyboardControls>

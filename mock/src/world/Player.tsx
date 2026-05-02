@@ -6,6 +6,7 @@ import { useGameStore } from "../store/gameStore";
 import { Character } from "./Character";
 
 const NPC_POSITION = new THREE.Vector3(5, 0, -3);
+const TAXI_POSITION = new THREE.Vector3(-2, 0, 12);
 const INTERACT_RADIUS = 3.5;
 
 export function Player() {
@@ -13,23 +14,31 @@ export function Player() {
   const innerRef = useRef<THREE.Group>(null!);
   const [, getKeys] = useKeyboardControls();
 
-  const setIsNearNPC = useGameStore((s) => s.setIsNearNPC);
+  const setProximityTarget = useGameStore((s) => s.setProximityTarget);
   const mode = useGameStore((s) => s.mode);
   const setMode = useGameStore((s) => s.setMode);
+  const scene = useGameStore((s) => s.scene);
+  const setScene = useGameStore((s) => s.setScene);
 
   const velocity = useRef(new THREE.Vector3());
   const targetRotation = useRef(0);
-  const isWalking = useRef(false);
 
   const { camera } = useThree();
   const camOffset = useMemo(() => new THREE.Vector3(0, 4.2, 6), []);
   const camLookOffset = useMemo(() => new THREE.Vector3(0, 1.4, 0), []);
 
-  // Press E to interact
+  // Press E to interact based on what we're standing next to.
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
-      if ((e.key === "e" || e.key === "E") && useGameStore.getState().isNearNPC) {
-        setMode("conversation");
+      if (e.key === "e" || e.key === "E") {
+        const t = useGameStore.getState().proximityTarget;
+        if (t === "info") {
+          setMode("conversation");
+        } else if (t === "taxi") {
+          // Get into the taxi → switch scene + open conversation
+          setScene("taxi");
+          setMode("conversation");
+        }
       }
       if (e.key === "Escape" && useGameStore.getState().mode === "conversation") {
         setMode("world");
@@ -37,15 +46,17 @@ export function Player() {
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [setMode]);
+  }, [setMode, setScene]);
 
   useFrame((_state, delta) => {
     const g = groupRef.current;
     if (!g) return;
 
-    const k = mode === "world"
-      ? getKeys()
-      : { forward: false, backward: false, left: false, right: false, run: false };
+    // Don't move in conversation mode, OR when scene is taxi (player is seated)
+    const inputBlocked = mode === "conversation" || scene === "taxi";
+    const k = inputBlocked
+      ? { forward: false, backward: false, left: false, right: false, run: false }
+      : getKeys();
 
     const dir = new THREE.Vector3();
     if (k.forward) dir.z -= 1;
@@ -63,22 +74,39 @@ export function Player() {
       targetRotation.current = Math.atan2(velocity.current.x, velocity.current.z);
     }
     g.rotation.y = THREE.MathUtils.lerp(g.rotation.y, targetRotation.current, 0.18);
-    isWalking.current = moving;
 
-    const dist = g.position.distanceTo(NPC_POSITION);
-    setIsNearNPC(dist < INTERACT_RADIUS && mode === "world");
+    // Proximity to interactables (only checked on airport scene)
+    if (scene === "airport" && mode === "world") {
+      const distInfo = g.position.distanceTo(NPC_POSITION);
+      const distTaxi = g.position.distanceTo(TAXI_POSITION);
+      let target: "info" | "taxi" | null = null;
+      // Pick closest interactable within radius
+      const candidates = [
+        { t: "info" as const, d: distInfo },
+        { t: "taxi" as const, d: distTaxi },
+      ].filter((c) => c.d < INTERACT_RADIUS);
+      candidates.sort((a, b) => a.d - b.d);
+      if (candidates.length) target = candidates[0].t;
+      setProximityTarget(target);
+    } else {
+      setProximityTarget(null);
+    }
 
-    const desiredCamPos = g.position.clone().add(camOffset);
-    camera.position.lerp(desiredCamPos, 0.08);
-    camera.lookAt(g.position.clone().add(camLookOffset));
+    // Camera behaviour:
+    // - Airport: third-person trailing
+    // - Taxi: locked rear-passenger seat POV
+    if (scene === "taxi") {
+      const desired = new THREE.Vector3(0.7, 1.5, -1.0);
+      camera.position.lerp(desired, 0.1);
+      camera.lookAt(0, 1.0, 4);
+      // Hide the player in taxi mode by moving them off-camera.
+      g.position.set(0, -50, 0);
+    } else {
+      const desiredCamPos = g.position.clone().add(camOffset);
+      camera.position.lerp(desiredCamPos, 0.08);
+      camera.lookAt(g.position.clone().add(camLookOffset));
+    }
   });
-
-  // We can't conditionally update Character with state in useFrame easily,
-  // so we expose a simple fact via the store (alternative: ref-driven scale).
-  // Walking visual is handled inside Character via its own useFrame using
-  // a simple heuristic: walking when last movement occurred. We pass via prop.
-  const walkingFlag = useGameStore((s) => s.mode === "world"); // permissive while in world
-  void walkingFlag;
 
   return (
     <group ref={groupRef} position={[0, 0, 6]}>
@@ -89,16 +117,12 @@ export function Player() {
   );
 }
 
-// Tiny wrapper that watches the player ref and animates accordingly.
-// Simpler: just pass a tween-detected walking based on velocity each frame.
 function PlayerCharacter() {
-  // We pass walking=true when WASD pressed via a subscription
-  const isWorld = useGameStore((s) => s.mode) === "world";
+  const isWorld = useGameStore((s) => s.mode === "world");
+  const sceneIsAirport = useGameStore((s) => s.scene === "airport");
   const [, getKeys] = useKeyboardControls();
-
-  // Read keys each render (cheap), forward as prop
   const k = getKeys();
-  const walking = isWorld && (k.forward || k.backward || k.left || k.right);
+  const walking = isWorld && sceneIsAirport && (k.forward || k.backward || k.left || k.right);
 
   return (
     <Character
