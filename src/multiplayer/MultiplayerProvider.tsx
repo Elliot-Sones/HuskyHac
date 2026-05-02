@@ -64,9 +64,9 @@ export function MultiplayerProvider({ children }: { children: ReactNode }) {
       displayName: draft.displayName.slice(0, 24),
     };
     setProfileDraftState(normalized);
-    window.localStorage.setItem('huskyhac.playerName', normalized.displayName);
-    window.localStorage.setItem('huskyhac.playerColor', normalized.color);
-    window.localStorage.setItem('huskyhac.playerAccessory', normalized.accessory);
+    writeLocalStorage('huskyhac.playerName', normalized.displayName);
+    writeLocalStorage('huskyhac.playerColor', normalized.color);
+    writeLocalStorage('huskyhac.playerAccessory', normalized.accessory);
   }, []);
 
   const ensureTransport = useCallback(() => {
@@ -197,9 +197,9 @@ export function useMultiplayer() {
 }
 
 function loadProfileDraft(): ProfileDraft {
-  const savedName = window.localStorage.getItem('huskyhac.playerName');
-  const savedColor = window.localStorage.getItem('huskyhac.playerColor');
-  const savedAccessory = window.localStorage.getItem('huskyhac.playerAccessory') as PlayerAccessory | null;
+  const savedName = readLocalStorage('huskyhac.playerName');
+  const savedColor = readLocalStorage('huskyhac.playerColor');
+  const savedAccessory = readLocalStorage('huskyhac.playerAccessory') as PlayerAccessory | null;
 
   return {
     displayName: savedName || `Traveler ${Math.floor(Math.random() * 90 + 10)}`,
@@ -220,10 +220,36 @@ function isMultiplayerDisabled(multiplayerUrl?: string) {
 }
 
 function getOrCreatePlayerToken() {
-  const existing = window.localStorage.getItem('huskyhac.playerToken');
+  const existing = readLocalStorage('huskyhac.playerToken');
   if (existing) return existing;
 
   const token = window.crypto?.randomUUID?.() ?? `player-${Math.random().toString(36).slice(2)}-${Date.now()}`;
-  window.localStorage.setItem('huskyhac.playerToken', token);
+  writeLocalStorage('huskyhac.playerToken', token);
   return token;
+}
+
+function readLocalStorage(key: string) {
+  try {
+    const storage = getLocalStorage();
+    return storage?.getItem(key) ?? null;
+  } catch {
+    return null;
+  }
+}
+
+function writeLocalStorage(key: string, value: string) {
+  try {
+    getLocalStorage()?.setItem(key, value);
+  } catch {
+    // Browser privacy modes and test harnesses can expose storage but reject writes.
+  }
+}
+
+function getLocalStorage() {
+  if (typeof window === 'undefined') return null;
+  const storage = window.localStorage;
+  if (!storage || typeof storage.getItem !== 'function' || typeof storage.setItem !== 'function') {
+    return null;
+  }
+  return storage;
 }
