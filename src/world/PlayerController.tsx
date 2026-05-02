@@ -4,7 +4,13 @@ import { useKeyboardControls } from '@react-three/drei';
 import * as THREE from 'three';
 import type { SceneMode } from '@/shared/contracts';
 import { Character } from '@/world/Character';
-import { AIRPORT_NPC_POSITION } from '@/world/AirportScene';
+import {
+  AIRPORT_BOUNDS,
+  AIRPORT_COLLIDERS,
+  AIRPORT_NPC_POSITION,
+  PLAYER_COLLIDER_RADIUS,
+} from '@/world/airportLayout';
+import { moveCircleWithColliders } from '@/world/physics';
 
 interface PlayerControllerProps {
   mode: SceneMode;
@@ -13,12 +19,6 @@ interface PlayerControllerProps {
 }
 
 const interactRadius = 3.3;
-const bounds = {
-  minX: -15,
-  maxX: 13,
-  minZ: -8.5,
-  maxZ: 12,
-};
 
 export function PlayerController({ mode, onNearNpcChange, onInteract }: PlayerControllerProps) {
   const playerRef = useRef<THREE.Group>(null);
@@ -75,9 +75,22 @@ export function PlayerController({ mode, onNearNpcChange, onInteract }: PlayerCo
       velocity.current.multiplyScalar(0.72);
     }
 
-    player.position.add(velocity.current);
-    player.position.x = THREE.MathUtils.clamp(player.position.x, bounds.minX, bounds.maxX);
-    player.position.z = THREE.MathUtils.clamp(player.position.z, bounds.minZ, bounds.maxZ);
+    const desiredDelta = { x: velocity.current.x, z: velocity.current.z };
+    const currentPosition = { x: player.position.x, z: player.position.z };
+    const nextPosition = moveCircleWithColliders(
+      currentPosition,
+      desiredDelta,
+      PLAYER_COLLIDER_RADIUS,
+      AIRPORT_COLLIDERS,
+      AIRPORT_BOUNDS,
+    );
+    const blockedX = Math.abs(nextPosition.x - (currentPosition.x + desiredDelta.x)) > 0.001;
+    const blockedZ = Math.abs(nextPosition.z - (currentPosition.z + desiredDelta.z)) > 0.001;
+
+    player.position.x = nextPosition.x;
+    player.position.z = nextPosition.z;
+    if (blockedX) velocity.current.x = 0;
+    if (blockedZ) velocity.current.z = 0;
     player.rotation.y = THREE.MathUtils.lerp(player.rotation.y, targetRotation.current, 0.18);
 
     if (visualRef.current) {
@@ -102,6 +115,11 @@ export function PlayerController({ mode, onNearNpcChange, onInteract }: PlayerCo
       y: player.position.y,
       z: player.position.z,
     };
+    window.__huskyCollisionDebug = {
+      blockedX,
+      blockedZ,
+      colliderCount: AIRPORT_COLLIDERS.length,
+    };
   });
 
   return (
@@ -116,5 +134,6 @@ export function PlayerController({ mode, onNearNpcChange, onInteract }: PlayerCo
 declare global {
   interface Window {
     __huskyPlayerPosition?: { x: number; y: number; z: number };
+    __huskyCollisionDebug?: { blockedX: boolean; blockedZ: boolean; colliderCount: number };
   }
 }

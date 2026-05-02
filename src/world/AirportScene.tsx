@@ -1,5 +1,4 @@
 import { Html, Text } from '@react-three/drei';
-import * as THREE from 'three';
 import type { ConversationStatus, SceneMode } from '@/shared/contracts';
 import { BackgroundTraveler } from '@/world/BackgroundTraveler';
 import { Character } from '@/world/Character';
@@ -361,5 +360,3 @@ function HangingSign({
     </group>
   );
 }
-
-export const AIRPORT_NPC_POSITION = new THREE.Vector3(4.7, 0, -4.55);
