@@ -122,7 +122,7 @@ describe('PlayWorld multiplayer integration', () => {
       worldCanvasProps.onTransitInteract(AIRPORT_TRANSIT_TARGETS[0]);
     });
 
-    await clickByAriaLabel('Practice phrase');
+    await clickButton(getButtonByText('Tour Eiffel'));
     await clickButton(getButtonByText('Go to the Eiffel Tower'));
 
     expect(container?.textContent).toContain('Road to the Eiffel Tower');

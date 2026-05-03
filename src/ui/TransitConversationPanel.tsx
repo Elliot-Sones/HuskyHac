@@ -16,6 +16,26 @@ interface TransitConversationPanelProps {
 }
 
 const COFFEE_SHOP_DESTINATION_ID = 'france-coffee_shop';
+const EIFFEL_TOWER_DESTINATION_ID = 'france-eiffel_tour';
+
+interface TransitTravelAction {
+  destinationId: string;
+  label: string;
+  terms: string[];
+}
+
+const TRANSIT_TRAVEL_ACTIONS: TransitTravelAction[] = [
+  {
+    destinationId: EIFFEL_TOWER_DESTINATION_ID,
+    label: 'Go to the Eiffel Tower',
+    terms: ['eiffel', 'tour eiffel'],
+  },
+  {
+    destinationId: COFFEE_SHOP_DESTINATION_ID,
+    label: 'Continue to Café Bisset',
+    terms: ['cafe', 'bisset', 'marais'],
+  },
+];
 
 export function TransitConversationPanel({
   dialogue,
@@ -37,6 +57,10 @@ export function TransitConversationPanel({
   const [isListening, setIsListening] = useState(false);
   const [speechError, setSpeechError] = useState<string | null>(null);
   const speechInputSupported = Boolean(lesson.speechInputSupported && speechInput.isSupported());
+  const travelAction = useMemo(
+    () => getTravelAction(`${selected.french} ${selected.english} ${draft}`),
+    [draft, selected.english, selected.french],
+  );
 
   useEffect(() => {
     if (
@@ -176,13 +200,13 @@ export function TransitConversationPanel({
                   <span className="font-semibold text-emerald-50">{draft}</span>
                   <span className="ml-2 text-emerald-50/60">{selected.english}</span>
                 </div>
-                {onTravelDestination && (
+                {onTravelDestination && travelAction && (
                   <button
                     type="button"
-                    onClick={() => onTravelDestination(COFFEE_SHOP_DESTINATION_ID)}
+                    onClick={() => onTravelDestination(travelAction.destinationId)}
                     className="shrink-0 rounded-xl bg-white px-4 py-2 text-[12px] font-black text-slate-950 shadow-lg shadow-white/10 transition hover:bg-emerald-100"
                   >
-                    Continue to Café Bisset
+                    {travelAction.label}
                   </button>
                 )}
               </div>
@@ -256,6 +280,22 @@ export function TransitConversationPanel({
       </div>
     </div>
   );
+}
+
+function getTravelAction(value: string): TransitTravelAction | null {
+  const normalized = normalizeTravelText(value);
+  return (
+    TRANSIT_TRAVEL_ACTIONS.find((action) =>
+      action.terms.some((term) => normalized.includes(normalizeTravelText(term))),
+    ) ?? null
+  );
+}
+
+function normalizeTravelText(value: string) {
+  return value
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase();
 }
 
 function VoiceButton({

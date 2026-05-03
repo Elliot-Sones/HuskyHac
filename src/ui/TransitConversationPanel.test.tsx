@@ -108,6 +108,35 @@ describe('TransitConversationPanel', () => {
     });
     expect(getButtonByText('Continue to Café Bisset')).not.toBeNull();
   });
+
+  it('shows the Eiffel Tower travel action when the user clicks an Eiffel text option', async () => {
+    const onTravelDestination = vi.fn();
+    mocks.useLessonStore.mockReturnValue(createLessonStoreMock());
+
+    await renderTransitConversationPanel({ onTravelDestination });
+    await clickButton(getButtonByText('Tour Eiffel'));
+
+    const travelButton = getButtonByText('Go to the Eiffel Tower');
+    expect(travelButton).not.toBeNull();
+
+    await clickButton(travelButton);
+
+    expect(onTravelDestination).toHaveBeenCalledWith('france-eiffel_tour');
+  });
+
+  it('shows the Eiffel Tower travel action when the spoken answer asks for Eiffel', async () => {
+    mocks.speechInput.listen.mockResolvedValueOnce({
+      text: 'Je voudrais aller a la Tour Eiffel.',
+      confidence: 0.98,
+      source: 'speech' as const,
+    });
+    mocks.useLessonStore.mockReturnValue(createLessonStoreMock());
+
+    await renderTransitConversationPanel();
+    await clickByAriaLabel('Answer by voice');
+
+    expect(getButtonByText('Go to the Eiffel Tower')).not.toBeNull();
+  });
 });
 
 function createLessonStoreMock() {
